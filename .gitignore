@@ -3,3 +3,4 @@ Code/data/*
 Code/venv/*
 Code/sequential/__pycache__/*
 *.idea
+*.pt

@@ -17,7 +17,7 @@ if __name__ == '__main__':
 
     seed = 123  # Set random seed.
     b = 256  # Set batch size.
-    e = 200  # Set number of epochs to be trained.
+    e = 50  # Set number of epochs to be trained.
 
     # Get device used for training, e.g., check via torch.cuda.is_available().
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')  # Set device.
