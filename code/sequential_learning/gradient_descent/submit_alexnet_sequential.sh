@@ -14,4 +14,4 @@ module load devel/cuda/10.2
 
 source venv/bin/activate      # Activate your virtual environment.
 
-python -u main.py
+python -u sequential_learning/gradient_descent/main.py

@@ -20,4 +20,4 @@ source venv/bin/activate      # Activate your virtual environment.
 
 unset SLURM_NTASKS_PER_TRES
 
-srun python -u main.py
+srun python -u dataparallel_learning/distributed_data_parallel/main.py
