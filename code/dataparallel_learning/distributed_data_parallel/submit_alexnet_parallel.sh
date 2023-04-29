@@ -16,8 +16,8 @@ module purge                                        # Unload currently loaded mo
 module load compiler/gnu/10.2
 module load devel/cuda/10.2
 
-source <path to your venv folder>/bin/activate      # Activate your virtual environment. TODO
+source venv/bin/activate      # Activate your virtual environment.
 
 unset SLURM_NTASKS_PER_TRES
 
-srun python -u <path to your python script>/main.py #TODO
+srun python -u main.py
