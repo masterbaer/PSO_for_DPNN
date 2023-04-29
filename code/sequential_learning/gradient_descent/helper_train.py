@@ -1,7 +1,7 @@
 import torch
 import time
 
-from sequential_learning.gradient_descent.helper_evaluation import compute_accuracy
+from helper_evaluation import compute_accuracy
 
 
 # TRAIN MODEL (NON-PARALLEL)

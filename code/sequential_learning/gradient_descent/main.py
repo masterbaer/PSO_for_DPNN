@@ -5,8 +5,8 @@
 import torch
 import torchvision
 from Alexnet import AlexNet
-from sequential_learning.gradient_descent.dataloader import get_dataloaders_cifar10, set_all_seeds
-from sequential_learning.gradient_descent.helper_train import train_model
+from dataloader import get_dataloaders_cifar10, set_all_seeds
+from helper_train import train_model
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':

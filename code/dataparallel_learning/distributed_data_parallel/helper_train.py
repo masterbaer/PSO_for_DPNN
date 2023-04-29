@@ -1,7 +1,7 @@
 import torch
 import time
 
-from dataparallel_learning.distributed_data_parallel.helper_evaluation import get_right_ddp
+from helper_evaluation import get_right_ddp
 
 
 def train_model_ddp(model, num_epochs, train_loader, valid_loader, optimizer):
