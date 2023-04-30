@@ -17,7 +17,7 @@ if __name__ == '__main__':
 
     seed = 123  # Set random seed.
     b = 256  # Set batch size.
-    e = 1  # Set number of epochs to be trained. Standard: 200 epochs
+    e = 2  # Set number of epochs to be trained. Standard: 200 epochs
 
     # Get device used for training, e.g., check via torch.cuda.is_available().
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')  # Set device.
@@ -85,6 +85,6 @@ if __name__ == '__main__':
                                                             scheduler=scheduler, logging_interval=100)
 
     # Save history lists for loss, training accuracy, and validation accuracy to files.
-    torch.save(loss_list, 'output/loss.pt')
-    torch.save(train_acc_list, 'output/train_acc.pt')
-    torch.save(valid_acc_list, 'output/valid_acc.pt')
+    torch.save(loss_list, 'seq_gd_loss.pt')
+    torch.save(train_acc_list, 'seq_gd_train_acc.pt')
+    torch.save(valid_acc_list, 'seq_gd_valid_acc.pt')

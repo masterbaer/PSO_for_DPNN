@@ -54,8 +54,8 @@ def train_model(model, num_epochs, train_loader,
             valid_acc = compute_accuracy(model, valid_loader, device=device)  # Compute accuracy on validation data.
 
             print(f'Epoch: {epoch + 1:03d}/{num_epochs:03d} '
-                  f'| Train: {train_acc :.2f}% '
-                  f'| Validation: {valid_acc :.2f}%')
+                  f'| Train: {train_acc :.2f} '
+                  f'| Validation: {valid_acc :.2f}')
 
             train_acc_history.append(train_acc.item())  # Append training accuracy to history list
             valid_acc_history.append(valid_acc.item())  # Append validation accuracy to history list.
@@ -71,6 +71,6 @@ def train_model(model, num_epochs, train_loader,
     # FINAL TESTING STARTS HERE.
     #
     test_acc = compute_accuracy(model, test_loader, device=device)  # Compute accuracy on test data.
-    print(f"Test accuracy {test_acc :.2f}%")
+    print(f"Test accuracy {test_acc :.2f}")
 
     return loss_history, train_acc_history, valid_acc_history

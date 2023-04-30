@@ -20,7 +20,7 @@ def compute_accuracy_ddp(model, data_loader):
             correct_pred += (predicted_labels == targets).sum()  # Accumulate number of correctly predicted samples.
 
     # Return accuracy as percentage of correctly predicted samples.
-    return correct_pred.float() / num_samples * 100  # Return accuracy.
+    return correct_pred.float() / num_samples  # Return accuracy.
 
 
 # COMPUTE NUMBER OF CORRECTLY PREDICTED + OVERALL NUMBER OF SAMPLES (DATA-PARALLEL)

@@ -12,4 +12,4 @@ def compute_accuracy(model, data_loader, device):
             _, predicted = torch.max(logits, dim=1)  # Determine class with max. probability for each sample.
             num_examples += targets.size(0)  # Update overall number of considered samples.
             correct_pred += (predicted == targets).sum()  # Update overall number of correct predictions.
-    return correct_pred.float() / num_examples * 100  # Return accuracy in percent
+    return correct_pred.float() / num_examples  # Return accuracy

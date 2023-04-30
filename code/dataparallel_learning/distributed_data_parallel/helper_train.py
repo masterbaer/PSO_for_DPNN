@@ -62,13 +62,13 @@ def train_model_ddp(model, num_epochs, train_loader, valid_loader, optimizer):
             torch.distributed.all_reduce(num_train)
             torch.distributed.all_reduce(num_valid)
             # Calculate global training and validation accuracy.
-            train_acc = right_train.item() / num_train.item() * 100
-            valid_acc = right_valid.item() / num_valid.item() * 100
+            train_acc = right_train.item() / num_train.item()
+            valid_acc = right_valid.item() / num_valid.item()
 
             if rank == 0:
                 print(f'Epoch: {epoch + 1:03d}/{num_epochs:03d} '
-                      f'| Train: {train_acc :.2f}% '
-                      f'| Validation: {valid_acc :.2f}%')
+                      f'| Train: {train_acc :.2f} '
+                      f'| Validation: {valid_acc :.2f}')
                 train_acc_history.append(train_acc)
                 valid_acc_history.append(valid_acc)
 
@@ -99,7 +99,7 @@ def train_model_ddp(model, num_epochs, train_loader, valid_loader, optimizer):
     #
     if rank == 0:
         print('Total Training Time:', Elapsed.item(), 'min')
-        torch.save(loss_history, 'output/loss.pt')
-        torch.save(train_acc_history, 'output/train_acc.pt')
-        torch.save(valid_acc_history, 'output/valid_acc.pt')
+        torch.save(loss_history, 'ddp_loss.pt')
+        torch.save(train_acc_history, 'ddp_train_acc.pt')
+        torch.save(valid_acc_history, 'ddp_valid_acc.pt')
     return
