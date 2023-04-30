@@ -40,7 +40,7 @@ def main():
 
     seed = 0  # Set random seed.
     b = 256  # Set batch size.
-    e = 10  # Set number of epochs to be trained.
+    e = 20  # Set number of epochs to be trained.
 
     # Set all seeds to chosen random seed.
     set_all_seeds(seed)
