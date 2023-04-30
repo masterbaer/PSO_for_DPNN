@@ -1,6 +1,7 @@
 import torch
 import time
 
+from result_plotter import save_plots
 from helper_evaluation import get_right_ddp
 
 
@@ -99,7 +100,8 @@ def train_model_ddp(model, num_epochs, train_loader, valid_loader, optimizer):
     #
     if rank == 0:
         print('Total Training Time:', Elapsed.item(), 'min')
-        torch.save(loss_history, 'ddp_loss.pt')
-        torch.save(train_acc_history, 'ddp_train_acc.pt')
-        torch.save(valid_acc_history, 'ddp_valid_acc.pt')
+        # torch.save(loss_history, 'ddp_loss.pt')
+        # torch.save(train_acc_history, 'ddp_train_acc.pt')
+        # torch.save(valid_acc_history, 'ddp_valid_acc.pt')
+        save_plots(loss_history, train_acc_history, valid_acc_history)
     return

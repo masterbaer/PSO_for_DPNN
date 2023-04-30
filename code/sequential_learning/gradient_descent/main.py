@@ -7,6 +7,7 @@ import torchvision
 from Alexnet import AlexNet
 from dataloader import get_dataloaders_cifar10, set_all_seeds
 from helper_train import train_model
+from result_plotter import save_plots
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
@@ -85,6 +86,7 @@ if __name__ == '__main__':
                                                             scheduler=scheduler, logging_interval=100)
 
     # Save history lists for loss, training accuracy, and validation accuracy to files.
-    torch.save(loss_list, 'seq_gd_loss.pt')
-    torch.save(train_acc_list, 'seq_gd_train_acc.pt')
-    torch.save(valid_acc_list, 'seq_gd_valid_acc.pt')
+    # torch.save(loss_list, 'seq_gd_loss.pt')
+    # torch.save(train_acc_list, 'seq_gd_train_acc.pt')
+    # torch.save(valid_acc_list, 'seq_gd_valid_acc.pt')
+    save_plots(loss_list, train_acc_list, valid_acc_list)

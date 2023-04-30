@@ -1,18 +1,15 @@
-import torch
 from matplotlib import pyplot as plt
 
-if __name__ == '__main__':
-    loss = torch.load('ddp_loss.pt')
-    plt.plot(loss)
+
+def save_plots(loss_list, train_acc_list, valid_acc_list):
+    plt.plot(loss_list)
     plt.ylabel("loss ddp")
     plt.show()
 
-    train_acc = torch.load('ddp_train_acc.pt')
-    plt.plot(train_acc)
+    plt.plot(train_acc_list)
     plt.ylabel("training accuracy ddp")
     plt.show()
 
-    valid_acc = torch.load('ddp_valid_acc.pt')
-    plt.plot(valid_acc)
+    plt.plot(valid_acc_list)
     plt.ylabel("validation accuracy ddp")
     plt.show()
