@@ -82,7 +82,7 @@ def main():
 
     model = Alexnet.AlexNet(num_classes=10).cuda()  # Create model and move it to GPU with id rank.
     ddp_model = DDP(model)  # Wrap model with DDP.
-    optimizer = torch.optim.SGD(ddp_model.parameters(), momentum=0.9, lr=0.1)
+    optimizer = torch.optim.SGD(ddp_model.parameters(), momentum=0.9, lr=0.01)
     # Train model.
     train_model_ddp(model=ddp_model, num_epochs=e, train_loader=train_loader,
                     valid_loader=valid_loader, optimizer=optimizer)

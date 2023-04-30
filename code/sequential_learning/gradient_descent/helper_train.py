@@ -17,7 +17,7 @@ def train_model(model, num_epochs, train_loader,
     # ACTUAL TRAINING STARTS HERE.
     for epoch in range(num_epochs):  # Loop over epochs.
 
-        model.train()  ## Set model to training mode.
+        model.train()  # Set model to training mode.
 
         #  Thus, layers like dropout, batchnorm etc. which behave differently on
         #  train and test procedures know what is going on and can behave accordingly.
@@ -30,8 +30,8 @@ def train_model(model, num_epochs, train_loader,
             #
             # FORWARD & BACKWARD PASS
             logits = model(features)  # Forward pass: Apply model to samples to calculate output.
-            loss = torch.nn.functional.cross_entropy(logits,
-                                                     targets)  # cross-entropy loss for multiclass classification
+            loss = torch.nn.functional.cross_entropy(logits, targets)  # cross-entropy loss for multiclass
+            # classification
             optimizer.zero_grad()  # Zero out gradients from former step.
             loss.backward()  # Backward pass: Compute gradients of loss w.r.t weights with backpropagation
             optimizer.step()  # Update model parameters via optimizer object, i.e. perform single optimization step.
@@ -63,7 +63,8 @@ def train_model(model, num_epochs, train_loader,
         elapsed = (time.perf_counter() - start) / 60  # Measure training time per epoch.
         print(f'Time elapsed: {elapsed:.2f} min')
 
-        if scheduler is not None: scheduler.step(valid_acc_history[-1])
+        if scheduler is not None:
+            scheduler.step(valid_acc_history[-1])
 
     elapsed = (time.perf_counter() - start) / 60
     print(f'Total Training Time: {elapsed:.2f} min')

@@ -70,7 +70,7 @@ if __name__ == '__main__':
     model = AlexNet(num_classes=10)  # Build instance of AlexNet with 10 classes for CIFAR-10.
     model = model.to(device)
 
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 
     # torch.optim.lr_scheduler provides several learning-rate adjustment methods based on number of epochs.
     # torch.optim.lr_scheduler.ReduceLROnPlateau: dynamic learning rate reducing based on some validation measurements.

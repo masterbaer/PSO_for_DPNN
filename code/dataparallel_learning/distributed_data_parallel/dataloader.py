@@ -8,6 +8,7 @@ def set_all_seeds(seed):
     os.environ["PL_GLOBAL_SEED"] = str(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
 
 
 def get_dataloaders_cifar10_ddp(batch_size,
