@@ -5,7 +5,7 @@ This is the repository for my Master's thesis.
 
 To run the script on the server:
 
-- Clone the repository via: git clone https://github.com/masterbaer/PSO_for_DPNN.git
+- Clone the repository via: "git clone https://github.com/masterbaer/PSO_for_DPNN.git"
 - Navigate to the folder with the .sh files.
 - Create a virtual environment with "python -m venv venv".
 - Upgrade pip twice "pip install --upgrade pip" "pip install --upgrade pip"
