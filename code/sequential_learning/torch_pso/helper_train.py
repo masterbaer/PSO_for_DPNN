@@ -41,7 +41,7 @@ def train_model(model, num_epochs, train_loader,
 
             predictions = model(features)
             loss = criterion(predictions, targets)
-            optimizer.step(closure())
+            optimizer.step(closure)
 
             loss_history.append(loss.item())  # Logging.
 
