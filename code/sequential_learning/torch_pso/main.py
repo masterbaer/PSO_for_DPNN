@@ -71,11 +71,15 @@ if __name__ == '__main__':
     model = torchvision.models.AlexNet(num_classes=10)
     model = model.to(device)
 
+    # The parameters max_param_value and min_param_value are only used for the initialization.
+    # The weights are picked randomly in the interval [min,max]
+    # The initial velocities are picked randomly in the interval [min-max, max-min]
+
     optimizer = ParticleSwarmOptimizer(model.parameters(),
                                        inertial_weight=0.5,
                                        num_particles=4,
-                                       max_param_value=10,
-                                       min_param_value=-10)
+                                       max_param_value=1,
+                                       min_param_value=-1)
 
     # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, mode='max', verbose=True)
     # optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)

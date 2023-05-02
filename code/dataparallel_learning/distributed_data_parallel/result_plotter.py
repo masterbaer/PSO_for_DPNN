@@ -1,5 +1,4 @@
 from matplotlib import pyplot as plt
-import torch
 
 
 def save_loss(loss_list):
