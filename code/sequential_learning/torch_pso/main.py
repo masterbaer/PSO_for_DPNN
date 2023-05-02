@@ -85,7 +85,7 @@ if __name__ == '__main__':
     # TRAIN MODEL.
     loss_list, train_acc_list, valid_acc_list = train_model(model=model, num_epochs=e,
                                                             train_loader=train_loader, valid_loader=valid_loader,
-                                                            test_loader=test_loader, #scheduler=scheduler,
+                                                            test_loader=test_loader,  # scheduler=scheduler,
                                                             optimizer=optimizer, criterion=criterion, device=device,
                                                             logging_interval=100)
 

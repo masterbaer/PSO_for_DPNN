@@ -4,7 +4,6 @@
 
 import torch
 import torchvision
-from Alexnet import AlexNet
 from dataloader import get_dataloaders_cifar10, set_all_seeds
 from helper_train import train_model
 import result_plotter
@@ -67,7 +66,7 @@ if __name__ == '__main__':
     # MAIN #
     ########
 
-    model = AlexNet(num_classes=10)  # Build instance of AlexNet with 10 classes for CIFAR-10.
+    model = torchvision.models.AlexNet(num_classes=10)
     model = model.to(device)
 
     optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)

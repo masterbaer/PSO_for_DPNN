@@ -8,7 +8,6 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from dataloader import get_dataloaders_cifar10_ddp, set_all_seeds
 from helper_train import train_model_ddp
 from helper_evaluation import compute_accuracy_ddp
-import Alexnet
 
 
 def main():
@@ -80,7 +79,7 @@ def main():
             shuffle=False
         )
 
-    model = Alexnet.AlexNet(num_classes=10).cuda()  # Create model and move it to GPU with id rank.
+    model = torchvision.models.AlexNet(num_classes=10).cuda()
     ddp_model = DDP(model)  # Wrap model with DDP.
     optimizer = torch.optim.SGD(ddp_model.parameters(), momentum=0.9, lr=0.01)
     # Train model.

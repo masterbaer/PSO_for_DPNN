@@ -1,8 +1,6 @@
 import torch
 import time
 
-from helper_evaluation import compute_accuracy
-
 
 # TRAIN MODEL (NON-PARALLEL)
 def train_model(model, num_epochs, train_loader,
@@ -45,6 +43,17 @@ def train_model(model, num_epochs, train_loader,
                 loss = criterion(predictions, targets)
                 # loss.backward() # no backward pass used
                 return loss
+
+            # TODO: Check the time needed for one optimizer step and for one single particle step and compare it to
+            #  Gradient Descent.
+
+            # TODO: Try out mixing gradient infos with initial velocities / every k steps / ... .
+
+            # TODO: Try out other variants of the algorithm.
+
+            # TODO: Learning Rate Scheduler? Is there a need for the validation set here?
+
+            # TODO: Visualise the particles.
 
             loss = optimizer.step(closure)  # The loss of the best particle AFTER every particle took one step.
             # Needs num_particles + 1 forward passes.
@@ -90,3 +99,16 @@ def train_model(model, num_epochs, train_loader,
     print(f"Test accuracy {test_acc :.2f}")
 
     return loss_history, train_acc_history, valid_acc_history
+
+
+def compute_accuracy(model, data_loader, device):
+    with torch.no_grad():
+        correct_pred, num_examples = 0, 0
+        for i, (features, targets) in enumerate(data_loader):  # Loop over batches in data.
+            features = features.to(device)
+            targets = targets.float().to(device)
+            logits = model(features)  # Calculate model output.
+            _, predicted = torch.max(logits, dim=1)  # Determine class with max. probability for each sample.
+            num_examples += targets.size(0)  # Update overall number of considered samples.
+            correct_pred += (predicted == targets).sum()  # Update overall number of correct predictions.
+    return correct_pred.float() / num_examples  # Return accuracy
