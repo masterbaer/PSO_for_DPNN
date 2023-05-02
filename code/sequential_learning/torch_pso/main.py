@@ -19,7 +19,7 @@ if __name__ == '__main__':
 
     seed = 123  # Set random seed.
     b = 256  # Set batch size.
-    e = 5  # Set number of epochs to be trained.
+    e = 20  # Set number of epochs to be trained.
 
     # Get device used for training, e.g., check via torch.cuda.is_available().
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')  # Set device.
@@ -74,8 +74,8 @@ if __name__ == '__main__':
     optimizer = ParticleSwarmOptimizer(model.parameters(),
                                        inertial_weight=0.5,
                                        num_particles=4,
-                                       max_param_value=1,
-                                       min_param_value=-1)
+                                       max_param_value=10,
+                                       min_param_value=-10)
 
     # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, mode='max', verbose=True)
     # optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
