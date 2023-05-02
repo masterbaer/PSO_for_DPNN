@@ -73,12 +73,12 @@ if __name__ == '__main__':
 
     optimizer = ParticleSwarmOptimizer(model.parameters(),
                                        inertial_weight=0.5,
-                                       num_particles=2,
+                                       num_particles=4,
                                        max_param_value=1,
                                        min_param_value=-1)
 
-    #scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, mode='max', verbose=True)
-    #optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, mode='max', verbose=True)
+    # optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 
     criterion = torch.nn.CrossEntropyLoss()
 

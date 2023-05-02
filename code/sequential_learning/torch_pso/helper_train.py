@@ -28,20 +28,26 @@ def train_model(model, num_epochs, train_loader,
             features = features.to(device)
             targets = targets.to(device)
 
-            # the closure method is needed when the function has to be reevaluated multiple times
-            # see https://pytorch.org/docs/stable/optim.html
-            # and https://github.com/qthequartermasterman/torch_pso for the usage
+            # The closure method is needed when the function has to be reevaluated multiple times,
+            # here for evaluating each particles' loss. See https://pytorch.org/docs/stable/optim.html .
+
+            # For implementation details of optim.step(closure) see torch_pso.optim.GenericPSO.step()
+            # and torch_pso.optim.ParticleSwarmOptimizer.Particle.step().
+
+            # The method optim.step(closure) with the particle swarm optimizer first takes one step on each
+            # particle (and calculates each particles' loss after the step). Then the new loss on the best particle
+            # is calculated again (even though it was already calculated) and returned.
+            # Hence, there are num_particles + 1 (in an ideal scenario only num_particles) forward passes.
 
             def closure():
-                optimizer.zero_grad()
+                optimizer.zero_grad()  # we will not use gradients for the update but change the parameters via PSO
                 predictions = model(features)
                 loss = criterion(predictions, targets)
-                # loss.backward()
+                # loss.backward() # no backward pass used
                 return loss
 
-            predictions = model(features)
-            loss = criterion(predictions, targets)
-            optimizer.step(closure)
+            loss = optimizer.step(closure)  # The loss of the best particle AFTER every particle took one step.
+            # Needs num_particles + 1 forward passes.
 
             loss_history.append(loss.item())  # Logging.
 
@@ -71,8 +77,9 @@ def train_model(model, num_epochs, train_loader,
         elapsed = (time.perf_counter() - start) / 60  # Measure training time per epoch.
         print(f'Time elapsed: {elapsed:.2f} min')
 
-        if scheduler is not None:
-            scheduler.step(valid_acc_history[-1])
+        # The scheduler is not present for PSO since the learning rate is incorporated in the algorithm.
+        # if scheduler is not None:
+        #     scheduler.step(valid_acc_history[-1])
 
     elapsed = (time.perf_counter() - start) / 60
     print(f'Total Training Time: {elapsed:.2f} min')
