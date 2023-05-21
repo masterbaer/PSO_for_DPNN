@@ -91,7 +91,7 @@ class PSO:
         particle_loss_list = torch.zeros(len(particles), self.max_iterations)
         particle_accuracy_list = torch.zeros(len(particles), self.max_iterations)
         ipca = IncrementalPCA(n_components=2, batch_size=len(particles))
-        particles_transformed = np.zeros((len(particles), self.max_iterations))
+        particles_transformed = np.zeros((self.max_iterations,len(particles), 2))
 
         for iteration in range(self.max_iterations):
 
