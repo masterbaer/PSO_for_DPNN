@@ -133,7 +133,10 @@ class PSO:
             print(f"Iteration {iteration + 1}/{self.max_iterations}, Best Loss: {global_best_loss}")
 
             print("using ipca to visualise data")
-            ipca.partial_fit(particles_np)
+            if iteration == 0:
+                ipca.partial_fit(particles_np)
+
+            print("transforming data", )
             particles_transformed[iteration] = ipca.transform(particles_np)
 
 
