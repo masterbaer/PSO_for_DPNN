@@ -49,7 +49,7 @@ if __name__ == '__main__':
 
     pso = PSO(model=model, num_particles=2, inertia_weight=0.9,
               social_weight=0.5, cognitive_weight=0.8, min_param_value=-1,
-              max_param_value=1, max_iterations=20, train_loader=valid_loader, device=device)
+              max_param_value=1, max_iterations=5, train_loader=valid_loader, device=device)
     # for now just use the validation set
 
     pso.optimize()

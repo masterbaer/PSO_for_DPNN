@@ -1,12 +1,6 @@
-import self as self
-import torch
-from typing import Dict, List, Callable, Type, Iterable, Optional, Any
-from dataloader import get_dataloaders_cifar10, set_all_seeds
 import numpy as np
-import torchvision
-from torch import device
-from torch.optim import Optimizer
-import copy
+import torch
+from sklearn.decomposition import IncrementalPCA
 
 
 # Adapted from the torch-pso implementation
@@ -35,6 +29,7 @@ def evaluate_position(model, data_loader, device):
     valid_loss = 0.0
     number_of_batches = len(data_loader)
     correct_pred, num_examples = 0, 0
+
     for i, (vinputs, vlabels) in enumerate(data_loader):  # Loop over batches in data.
         vinputs = vinputs.to(device)
         vlabels = vlabels.to(device)
@@ -43,7 +38,7 @@ def evaluate_position(model, data_loader, device):
         num_examples += vlabels.size(0)  # Update overall number of considered samples.
         correct_pred += (predicted == vlabels).sum()  # Update overall number of correct predictions.
         loss = loss_fn(predictions, vlabels)
-        #loss = torch.nn.functional.cross_entropy(predictions, vlabels)  # cross-entropy loss for multiclass
+        # loss = torch.nn.functional.cross_entropy(predictions, vlabels)  # cross-entropy loss for multiclass
 
         valid_loss = valid_loss + loss.item()
 
@@ -56,10 +51,10 @@ class Particle:
 
     def __init__(self, num_weights, min_param_value, max_param_value):
         # maybe only save the parameters?
-        self.position = (max_param_value-min_param_value)*torch.rand(num_weights) + min_param_value
-        self.velocity = (max_param_value-min_param_value)*torch.rand(num_weights) + min_param_value
+        self.position = (max_param_value - min_param_value) * torch.rand(num_weights) + min_param_value
+        self.velocity = (max_param_value - min_param_value) * torch.rand(num_weights) + min_param_value
         self.best_position = self.position.detach().clone()
-        self.best_loss = float('inf')  # Change to best accuracy/fitness?
+        self.best_loss = float('inf')  # Change to the best accuracy/fitness?
 
 
 class PSO:
@@ -87,13 +82,19 @@ class PSO:
 
     def optimize(self):
         num_weights = sum(p.numel() for p in self.model.parameters())
-        particles = [Particle(num_weights, self.min_param_value, self.max_param_value) for _ in range(self.num_particles)]
+        particles = [Particle(num_weights, self.min_param_value, self.max_param_value) for _ in
+                     range(self.num_particles)]
         global_best_loss = float('inf')
-        global_best_position = particles[0].best_position # init as first particle position
+        global_best_accuracy = 0.0
+        global_best_position = particles[0].best_position  # init as first particle position
+
         particle_loss_list = torch.zeros(len(particles), self.max_iterations)
         particle_accuracy_list = torch.zeros(len(particles), self.max_iterations)
+        ipca = IncrementalPCA(n_components=2, batch_size=len(particles))
+        particles_transformed = np.zeros((len(particles), self.max_iterations))
 
         for iteration in range(self.max_iterations):
+
             for particle_index, particle in enumerate(particles):
                 # Update particle velocity and position
                 particle.velocity = (self.inertia_weight * particle.velocity +
@@ -110,7 +111,8 @@ class PSO:
                 particle_loss, particle_accuracy = evaluate_position(self.model, self.train_loader, self.device)
                 particle_loss_list[particle_index, iteration] = particle_loss
 
-                print(f"(particle,loss,accuracy) = {(particle_index + 1, round(particle_loss,3), round(particle_accuracy.item(),3))}")
+                print(
+                    f"(particle,loss,accuracy) = {(particle_index + 1, round(particle_loss, 3), round(particle_accuracy.item(), 3))}")
 
                 # Update particle's best position and fitness
                 if particle_loss < particle.best_loss:
@@ -122,7 +124,19 @@ class PSO:
                     global_best_loss = particle_loss
                     global_best_position = particle.position.clone()
 
+                if particle_accuracy > global_best_accuracy:
+                    global_best_accuracy = particle_accuracy
+
+            particles_np = np.zeros((len(particles), num_weights))
+            for particle_index, particle in enumerate(particles):
+                particles_np[particle_index] = particle.position.numpy()
             print(f"Iteration {iteration + 1}/{self.max_iterations}, Best Loss: {global_best_loss}")
+
+            print("using ipca to visualise data")
+            ipca.partial_fit(particles_np)
+            particles_transformed[iteration] = ipca.transform(particles_np)
+
 
         torch.save(particle_loss_list, "particle_loss_list.pt")
         torch.save(particle_accuracy_list, "particle_accuracy_list.pt")
+        torch.save(particles_transformed, "pca_weights.pt")
