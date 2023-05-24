@@ -82,6 +82,8 @@ def print_pca():
             y1 = particles[iteration + 1, particle_index, 1]
             plt.arrow(x0, y0, x1 - x0, y1 - y0, color=color, head_length=0.3, head_width=0.05)
     plt.show()
+    # plt.savefig('pso_sequential_experiment.png')
+
     plt.cla()
 
 

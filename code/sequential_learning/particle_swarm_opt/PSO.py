@@ -91,13 +91,11 @@ class PSO:
         particle_loss_list = torch.zeros(len(particles), self.max_iterations)
         particle_accuracy_list = torch.zeros(len(particles), self.max_iterations)
 
-        #ipca = IncrementalPCA(n_components=2, batch_size=len(particles))
+        # ipca = IncrementalPCA(n_components=2, batch_size=len(particles))
         pca = PCA(n_components=2)
-
         particles_transformed = np.zeros((self.max_iterations, len(particles), 2))
 
         for iteration in range(self.max_iterations):
-
             for particle_index, particle in enumerate(particles):
                 # Update particle velocity and position
                 particle.velocity = (self.inertia_weight * particle.velocity +
@@ -136,14 +134,14 @@ class PSO:
                 particles_np[particle_index] = particle.position.numpy()
             print(f"Iteration {iteration + 1}/{self.max_iterations}, Best Loss: {global_best_loss}")
 
-            #print("using ipca to visualise data")
+            # print("using ipca to visualise data")
             print("using pca to visualise data")
             if iteration == 0:
-                #ipca.partial_fit(particles_np)
+                # ipca.partial_fit(particles_np)
                 pca.fit(particles_np)
 
             print("transforming data", )
-            #particles_transformed[iteration] = ipca.transform(particles_np)
+            # particles_transformed[iteration] = ipca.transform(particles_np)
             particles_transformed[iteration] = pca.transform(particles_np)
 
         torch.save(particle_loss_list, "particle_loss_list.pt")
