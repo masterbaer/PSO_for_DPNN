@@ -52,7 +52,7 @@ if __name__ == '__main__':
               max_param_value=1, max_iterations=200, train_loader=valid_loader, device=device)
     # for now just use the validation set
 
-    pso.optimize()
+    pso.optimize(visualize=True)
 
     #  weights = extract_weights(model)
     #  print(weights.shape)

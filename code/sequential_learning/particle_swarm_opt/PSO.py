@@ -80,7 +80,7 @@ class PSO:
         self.train_loader = train_loader
         self.device = device
 
-    def optimize(self):
+    def optimize(self, visualize=False):
         num_weights = sum(p.numel() for p in self.model.parameters())
         particles = [Particle(num_weights, self.min_param_value, self.max_param_value) for _ in
                      range(self.num_particles)]
@@ -91,10 +91,25 @@ class PSO:
         particle_loss_list = torch.zeros(len(particles), self.max_iterations)
         particle_accuracy_list = torch.zeros(len(particles), self.max_iterations)
 
-        # ipca = IncrementalPCA(n_components=2, batch_size=len(particles))
-        pca = PCA(n_components=2)
-        particles_transformed = np.zeros((self.max_iterations, len(particles), 2))
+        #  Use PCA for visualization, this may use too much RAM for large models and many particles.
+        #  Use the "fit" method only on first generation. Use "transform" on every particle in each iteration.
+        pca = None
+        particles_transformed = None
+        particles_np = None
 
+        if visualize:
+            pca = PCA(n_components=2)
+            particles_transformed = np.zeros((self.max_iterations, len(particles), 2))
+
+            particles_np = np.zeros((len(particles), num_weights))
+            for particle_index, particle in enumerate(particles):
+                # Turn torch tensors to numpy in order to use sklearn's PCA.
+                particles_np[particle_index] = particle.position.numpy()
+
+            print("fitting pca")
+            pca.fit(particles_np)
+
+        #  Training Loop
         for iteration in range(self.max_iterations):
             for particle_index, particle in enumerate(particles):
                 # Update particle velocity and position
@@ -129,21 +144,14 @@ class PSO:
                 if particle_accuracy > global_best_accuracy:
                     global_best_accuracy = particle_accuracy
 
-            particles_np = np.zeros((len(particles), num_weights))
-            for particle_index, particle in enumerate(particles):
-                particles_np[particle_index] = particle.position.numpy()
             print(f"Iteration {iteration + 1}/{self.max_iterations}, Best Loss: {global_best_loss}")
 
-            # print("using ipca to visualise data")
-            print("using pca to visualise data")
-            if iteration == 0:
-                # ipca.partial_fit(particles_np)
-                pca.fit(particles_np)
-
-            print("transforming data", )
-            # particles_transformed[iteration] = ipca.transform(particles_np)
-            particles_transformed[iteration] = pca.transform(particles_np)
+            #  Transforming Data for visualization
+            if visualize:
+                particles_transformed[iteration] = pca.transform(particles_np)
 
         torch.save(particle_loss_list, "particle_loss_list.pt")
         torch.save(particle_accuracy_list, "particle_accuracy_list.pt")
-        torch.save(particles_transformed, "pca_weights.pt")
+
+        if visualize:
+            torch.save(particles_transformed, "pca_weights.pt")
