@@ -206,8 +206,8 @@ def create_animation():
         best_weight = particles[last_relevant_iteration, best_particle]
 
         plt.text(0.01, 0.99, f'iteration {iteration}', ha='left', va='top', transform=ax.transAxes)
-        plt.text(0.01, 0.95, f'best loss:  {best_loss}', ha='left', va='top', transform=ax.transAxes)
-        plt.text(0.01, 0.91, f'best accuracy:  {accuracies[best_particle, last_relevant_iteration]}',
+        plt.text(0.01, 0.95, f'best loss:  {round(best_loss.item(),3)}', ha='left', va='top', transform=ax.transAxes)
+        plt.text(0.01, 0.91, f'best accuracy:  {round(accuracies[best_particle, last_relevant_iteration].item(),3)}',
                  ha='left', va='top', transform=ax.transAxes)
 
         #  plot all points
