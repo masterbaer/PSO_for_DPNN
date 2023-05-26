@@ -1,3 +1,4 @@
+import torch
 from matplotlib import pyplot as plt
 
 
@@ -23,3 +24,9 @@ def save_valid_acc(valid_acc_list):
     plt.savefig('seq_gd_valid_acc.png')
     plt.cla()
     return
+
+if __name__ == '__main__':
+    losses = torch.load("seq_gd_loss.pt")
+    accuracies_train = torch.load("seq_gd_train_acc.pt")
+    accuracies_valid = torch.load("seq_gd_valid_acc.pt")
+

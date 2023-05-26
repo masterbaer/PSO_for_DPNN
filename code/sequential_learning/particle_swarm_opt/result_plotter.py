@@ -22,7 +22,7 @@ def print_losses():
     plt.cla()
 
 
-def print_global_loss():
+def get_global_losses():
     losses = torch.load('particle_loss_list.pt')
     particle_size, iterations = losses.shape
 
@@ -33,14 +33,10 @@ def print_global_loss():
     for i in range(iterations - 1):
         new_best_loss = torch.min(losses[:, i + 1])
         gbest_list[i + 1] = torch.min(gbest_list[i], new_best_loss)
-
-    plt.plot(gbest_list)
-    plt.ylabel("global best loss")
-    plt.show()
-    plt.cla()
+    return gbest_list
 
 
-def print_global_accuracy():
+def get_global_accuracies():
     particles = torch.load('pca_weights.pt')  # (iteration, particle, 2)
     losses = torch.load("particle_loss_list.pt")  # (particle,iteration)
     accuracies = torch.load("particle_accuracy_list.pt")
@@ -71,7 +67,19 @@ def print_global_accuracy():
 
         best_particle = gbest_particles[iteration]
         best_accuracies[iteration] = accuracies[best_particle, last_relevant_iteration]
+    return best_accuracies
 
+
+def print_global_loss():
+    gbest_list = get_global_losses()
+    plt.plot(gbest_list)
+    plt.ylabel("global best loss")
+    plt.show()
+    plt.cla()
+
+
+def print_global_accuracy():
+    best_accuracies = get_global_accuracies()
     plt.plot(best_accuracies)
     plt.ylabel("global accuracy")
     plt.show()
@@ -206,8 +214,8 @@ def create_animation():
         best_weight = particles[last_relevant_iteration, best_particle]
 
         plt.text(0.01, 0.99, f'iteration {iteration}', ha='left', va='top', transform=ax.transAxes)
-        plt.text(0.01, 0.95, f'best loss:  {round(best_loss.item(),3)}', ha='left', va='top', transform=ax.transAxes)
-        plt.text(0.01, 0.91, f'best accuracy:  {round(accuracies[best_particle, last_relevant_iteration].item(),3)}',
+        plt.text(0.01, 0.95, f'best loss:  {round(best_loss.item(), 3)}', ha='left', va='top', transform=ax.transAxes)
+        plt.text(0.01, 0.91, f'best accuracy:  {round(accuracies[best_particle, last_relevant_iteration].item(), 3)}',
                  ha='left', va='top', transform=ax.transAxes)
 
         #  plot all points
@@ -217,12 +225,50 @@ def create_animation():
         gbest = np.random.random((2, 1))
         gbest[:, 0] = best_weight
         plt.scatter(*gbest, c="black", s=50, marker="X")
+
         camera.snap()
 
-    anim = camera.animate(blit=True, interval=700)
-    anim.save('scatter.mp4')
-    plt.cla()
+        if iteration == 0:
+            plt.savefig("plot_at_beginning.png")
+        if iteration == number_of_iterations - 1:
+            anim = camera.animate(blit=True, interval=700)
+            anim.save('scatter.mp4')
+            plt.cla()
+
+            # Plot the particles in the last iteration
+            fig, ax = plt.subplots()
+            plt.title("Particle Swarm Optimization")
+            plt.xlabel('PCA1')
+            plt.ylabel('PCA2')
+            plt.scatter(*points, c=colors, s=25)
+            plt.scatter(*gbest, c="black", s=50, marker="X")
+            for particle_index in range(number_of_particles):
+                plt.text(particles[iteration, particle_index][0], particles[iteration, particle_index][1],
+                         f"p{particle_index + 1}")
+            plt.text(0.01, 0.99, f'iteration {iteration}', ha='left', va='top', transform=ax.transAxes)
+            plt.text(0.01, 0.95, f'best loss:  {round(best_loss.item(), 3)}', ha='left', va='top',
+                     transform=ax.transAxes)
+            plt.text(0.01, 0.91,
+                     f'best accuracy:  {round(accuracies[best_particle, last_relevant_iteration].item(), 3)}',
+                     ha='left', va='top', transform=ax.transAxes)
+            plt.savefig("plot_at_last_iteration.png")
+
+
+
 
 
 if __name__ == '__main__':
+    valid_losses = get_global_losses()
+    valid_accuracies = get_global_accuracies()
+
+    plt.plot(valid_losses)
+    plt.ylabel("validation loss")
+    plt.savefig('seq_pso_valid_loss.png')
+    plt.cla()
+
+    plt.plot(valid_accuracies)
+    plt.ylabel("validation accuracy")
+    plt.savefig('seq_pso_valid_acc.png')
+    plt.cla()
+
     create_animation()

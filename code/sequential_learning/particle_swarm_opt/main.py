@@ -4,6 +4,29 @@ import torchvision
 from sequential_learning.particle_swarm_opt.PSO import PSO
 from sequential_learning.particle_swarm_opt.dataloader import get_dataloaders_cifar10
 
+
+def evaluate_model(model, test_data_loader):
+    #  Compute Loss
+    loss_fn = torch.nn.CrossEntropyLoss()
+    test_loss = 0.0
+    number_of_batches = len(test_data_loader)
+    correct_pred, num_examples = 0, 0
+
+    for i, (vinputs, vlabels) in enumerate(test_data_loader):  # Loop over batches in data.
+        vinputs = vinputs.to(device)
+        vlabels = vlabels.to(device)
+        predictions = model(vinputs)  # Calculate model output.
+        _, predicted = torch.max(predictions, dim=1)  # Determine class with max. probability for each sample.
+        num_examples += vlabels.size(0)  # Update overall number of considered samples.
+        correct_pred += (predicted == vlabels).sum()  # Update overall number of correct predictions.
+        loss = loss_fn(predictions, vlabels)
+        test_loss = test_loss + loss.item()
+
+    loss_per_batch = test_loss / number_of_batches
+    accuracy = correct_pred.float() / num_examples
+    return loss_per_batch, accuracy
+
+
 if __name__ == '__main__':
 
     b = 256  # Set batch size.
@@ -53,6 +76,11 @@ if __name__ == '__main__':
     # for now just use the validation set
 
     pso.optimize(visualize=True)
+
+    # final loss on test set
+    loss, accuracy = evaluate_model(model, test_loader)
+    print("final test loss: ", loss)
+    print("final test accuracy: ", accuracy)
 
     #  weights = extract_weights(model)
     #  print(weights.shape)

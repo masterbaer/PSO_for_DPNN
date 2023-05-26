@@ -93,20 +93,15 @@ class PSO:
 
         #  Use PCA for visualization, this may use too much RAM for large models and many particles.
         #  Use the "fit" method only on first generation. Use "transform" on every particle in each iteration.
-        pca = None
-        particles_transformed = None
-        particles_np = None
 
+        pca = PCA(n_components=2)
+        particles_transformed = np.zeros((self.max_iterations, len(particles), 2))
+        particles_np = np.zeros((len(particles), num_weights))
         if visualize:
-            pca = PCA(n_components=2)
-            particles_transformed = np.zeros((self.max_iterations, len(particles), 2))
-
-            particles_np = np.zeros((len(particles), num_weights))
             for particle_index, particle in enumerate(particles):
                 # Turn torch tensors to numpy in order to use sklearn's PCA.
                 particles_np[particle_index] = particle.position.numpy()
-
-            print("fitting pca")
+            print("fitting pca on first generation")
             pca.fit(particles_np)
 
         #  Training Loop
@@ -128,8 +123,9 @@ class PSO:
                 particle_loss_list[particle_index, iteration] = particle_loss
                 particle_accuracy_list[particle_index, iteration] = particle_accuracy
 
-                print(
-                    f"(particle,loss,accuracy) = {(particle_index + 1, round(particle_loss, 3), round(particle_accuracy.item(), 3))}")
+                if iteration % 5 == 0:
+                    print(f"(particle,loss,accuracy) = "
+                          f"{(particle_index + 1, round(particle_loss, 3), round(particle_accuracy.item(), 3))}")
 
                 # Update particle's best position and fitness
                 if particle_loss < particle.best_loss:
@@ -148,6 +144,10 @@ class PSO:
 
             #  Transforming Data for visualization
             if visualize:
+                for particle_index, particle in enumerate(particles):
+                    # Turn torch tensors to numpy in order to use sklearn's PCA.
+                    particles_np[particle_index] = particle.position.numpy()
+
                 particles_transformed[iteration] = pca.transform(particles_np)
 
         torch.save(particle_loss_list, "particle_loss_list.pt")

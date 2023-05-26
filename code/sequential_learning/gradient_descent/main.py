@@ -7,6 +7,7 @@ import torchvision
 from dataloader import get_dataloaders_cifar10, set_all_seeds
 from helper_train import train_model
 import result_plotter
+from sequential_learning.gradient_descent.model import NeuralNetwork
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
@@ -17,7 +18,7 @@ if __name__ == '__main__':
 
     seed = 123  # Set random seed.
     b = 256  # Set batch size.
-    e = 40  # Set number of epochs to be trained. Standard: 200 epochs
+    e = 40  # Set number of epochs to be trained.
 
     # Get device used for training, e.g., check via torch.cuda.is_available().
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')  # Set device.
@@ -31,16 +32,9 @@ if __name__ == '__main__':
     # Using transforms on your data allows you to transform it from its
     # source state so that it is ready for training/validation/testing.
 
-    train_transforms = torchvision.transforms.Compose([
+    cifar_10_transforms = torchvision.transforms.Compose([
         torchvision.transforms.Resize((70, 70)),
         torchvision.transforms.RandomCrop((64, 64)),
-        torchvision.transforms.ToTensor(),
-        torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-    ])
-
-    test_transforms = torchvision.transforms.Compose([
-        torchvision.transforms.Resize((70, 70)),
-        torchvision.transforms.CenterCrop((64, 64)),
         torchvision.transforms.ToTensor(),
         torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
@@ -50,8 +44,8 @@ if __name__ == '__main__':
         batch_size=b,
         root="../../data",
         validation_fraction=0.1,
-        train_transforms=train_transforms,
-        test_transforms=test_transforms,
+        train_transforms=cifar_10_transforms,
+        test_transforms=cifar_10_transforms,
         num_workers=0
     )
 
@@ -66,7 +60,14 @@ if __name__ == '__main__':
     # MAIN #
     ########
 
-    model = torchvision.models.AlexNet(num_classes=10)
+    # model = torchvision.models.AlexNet(num_classes=10)
+    num_classes = 10
+    image_shape = None
+    for images, labels in train_loader:
+        image_shape = images.shape
+        break
+    model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)
+
     model = model.to(device)
 
     optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
@@ -88,6 +89,6 @@ if __name__ == '__main__':
     torch.save(loss_list, 'seq_gd_loss.pt')
     torch.save(train_acc_list, 'seq_gd_train_acc.pt')
     torch.save(valid_acc_list, 'seq_gd_valid_acc.pt')
-    result_plotter.save_loss(loss_list)
-    result_plotter.save_train_acc(train_acc_list)
-    result_plotter.save_valid_acc(valid_acc_list)
+    #result_plotter.save_loss(loss_list)
+    #result_plotter.save_train_acc(train_acc_list)
+    #result_plotter.save_valid_acc(valid_acc_list)
