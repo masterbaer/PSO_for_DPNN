@@ -1,7 +1,6 @@
 from matplotlib import pyplot as plt
 import matplotlib
 from celluloid import Camera
-from matplotlib import cm
 
 import torch
 import numpy as np
@@ -254,10 +253,7 @@ def create_animation():
             plt.savefig("plot_at_last_iteration.png")
 
 
-
-
-
-if __name__ == '__main__':
+def plot_all():
     valid_losses = get_global_losses()
     valid_accuracies = get_global_accuracies()
 
@@ -272,3 +268,7 @@ if __name__ == '__main__':
     plt.cla()
 
     create_animation()
+
+
+if __name__ == '__main__':
+    plot_all()

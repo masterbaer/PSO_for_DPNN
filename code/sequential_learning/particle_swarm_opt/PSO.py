@@ -80,7 +80,7 @@ class PSO:
         self.train_loader = train_loader
         self.device = device
 
-    def optimize(self, visualize=False):
+    def optimize(self, visualize=False, evaluate=True):
         num_weights = sum(p.numel() for p in self.model.parameters())
         particles = [Particle(num_weights, self.min_param_value, self.max_param_value) for _ in
                      range(self.num_particles)]
@@ -120,10 +120,11 @@ class PSO:
 
                 # Evaluate particle fitness using the fitness function
                 particle_loss, particle_accuracy = evaluate_position(self.model, self.train_loader, self.device)
-                particle_loss_list[particle_index, iteration] = particle_loss
-                particle_accuracy_list[particle_index, iteration] = particle_accuracy
+                if evaluate:
+                    particle_loss_list[particle_index, iteration] = particle_loss
+                    particle_accuracy_list[particle_index, iteration] = particle_accuracy
 
-                if iteration % 5 == 0:
+                if iteration % 20 == 0:
                     print(f"(particle,loss,accuracy) = "
                           f"{(particle_index + 1, round(particle_loss, 3), round(particle_accuracy.item(), 3))}")
 
@@ -139,8 +140,8 @@ class PSO:
 
                 if particle_accuracy > global_best_accuracy:
                     global_best_accuracy = particle_accuracy
-
-            print(f"Iteration {iteration + 1}/{self.max_iterations}, Best Loss: {global_best_loss}")
+            if iteration % 20 == 0:
+                print(f"Iteration {iteration + 1}/{self.max_iterations}, Best Loss: {global_best_loss}")
 
             #  Transforming Data for visualization
             if visualize:
@@ -150,8 +151,12 @@ class PSO:
 
                 particles_transformed[iteration] = pca.transform(particles_np)
 
-        torch.save(particle_loss_list, "particle_loss_list.pt")
-        torch.save(particle_accuracy_list, "particle_accuracy_list.pt")
+        if evaluate:
+            torch.save(particle_loss_list, "particle_loss_list.pt")
+            torch.save(particle_accuracy_list, "particle_accuracy_list.pt")
 
         if visualize:
             torch.save(particles_transformed, "pca_weights.pt")
+
+        # the global best accuracy does not have to match to the best loss here
+        return global_best_loss, global_best_accuracy
