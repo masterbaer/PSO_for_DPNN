@@ -100,3 +100,4 @@ if __name__ == '__main__':
 
     print("best hyperparameters: ", f"inertial_weight = {best_inertial_weight}, social_weight={best_social_weight}, "
                                     f"cognitive_weight = {best_cognitive_weight}")
+    print("loss: ", best_loss)

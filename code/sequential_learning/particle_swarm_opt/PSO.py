@@ -135,9 +135,9 @@ class PSO:
                     particle_loss_list[particle_index, iteration] = particle_loss
                     particle_accuracy_list[particle_index, iteration] = particle_accuracy
 
-                if iteration % 20 == 0:
-                    print(f"(particle,loss,accuracy) = "
-                          f"{(particle_index + 1, round(particle_loss, 3), round(particle_accuracy.item(), 3))}")
+                #if iteration % 20 == 0:
+                #    print(f"(particle,loss,accuracy) = "
+                #          f"{(particle_index + 1, round(particle_loss, 3), round(particle_accuracy.item(), 3))}")
 
                 # Update particle's best position and fitness
                 if particle_loss < particle.best_loss:
