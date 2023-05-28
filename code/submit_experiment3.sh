@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #SBATCH --partition=gpu_4
 #SBATCH --gres=gpu:4 # number of requested GPUs (GPU nodes shared btwn multiple jobs)
 #SBATCH --ntasks=4
