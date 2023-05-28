@@ -49,11 +49,18 @@ def evaluate_position(model, data_loader, device):
 
 class Particle:
 
-    def __init__(self, num_weights, min_param_value, max_param_value):
+    def __init__(self, num_weights, min_param_value, max_param_value, device):
         # maybe only save the parameters?
+        self.device = device
         self.position = (max_param_value - min_param_value) * torch.rand(num_weights) + min_param_value
+        self.position = self.position.to(self.device)
+
         self.velocity = (max_param_value - min_param_value) * torch.rand(num_weights) + min_param_value
+        self.velocity = self.velocity.to(self.device)
+
         self.best_position = self.position.detach().clone()
+        self.best_position = self.best_position.to(self.device)
+
         self.best_loss = float('inf')  # Change to the best accuracy/fitness?
 
 
@@ -69,7 +76,9 @@ class PSO:
                  max_iterations: int,
                  train_loader,
                  device):
+        self.device = device
         self.model = model
+        self.model = self.model.to(self.device)
         self.num_particles = num_particles
         self.inertia_weight = inertia_weight
         self.social_weight = social_weight
@@ -78,11 +87,11 @@ class PSO:
         self.max_param_value = max_param_value
         self.max_iterations = max_iterations
         self.train_loader = train_loader
-        self.device = device
+
 
     def optimize(self, visualize=False, evaluate=True):
         num_weights = sum(p.numel() for p in self.model.parameters())
-        particles = [Particle(num_weights, self.min_param_value, self.max_param_value) for _ in
+        particles = [Particle(num_weights, self.min_param_value, self.max_param_value, self.device) for _ in
                      range(self.num_particles)]
         global_best_loss = float('inf')
         global_best_accuracy = 0.0
@@ -95,9 +104,11 @@ class PSO:
         #  Use the "fit" method only on first generation. Use "transform" on every particle in each iteration.
 
         pca = PCA(n_components=2)
-        particles_transformed = np.zeros((self.max_iterations, len(particles), 2))
-        particles_np = np.zeros((len(particles), num_weights))
+        particles_transformed = None
+        particles_np = None
         if visualize:
+            particles_transformed = np.zeros((self.max_iterations, len(particles), 2))
+            particles_np = np.zeros((len(particles), num_weights))
             for particle_index, particle in enumerate(particles):
                 # Turn torch tensors to numpy in order to use sklearn's PCA.
                 particles_np[particle_index] = particle.position.numpy()
