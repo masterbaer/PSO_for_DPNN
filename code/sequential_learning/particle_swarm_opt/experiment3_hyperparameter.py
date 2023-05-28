@@ -86,13 +86,14 @@ if __name__ == '__main__':
 
         loss, accuracy = evaluate_model(model, test_loader)
         print("final test loss: ", loss)
-        print("final test accuracy: ", accuracy)
+        print("final test accuracy: ", accuracy.item())
 
         if loss < best_loss:
+            best_loss = loss
             best_inertial_weight = inertial_weight
             best_social_weight = social_weight
             best_cognitive_weight = cognitive_weight
-            print("better solution found")
+            print("better solution found, new best loss: ", best_loss)
 
         print("best hyperparameters so far: ",
               f"inertial_weight = {best_inertial_weight}, social_weight={best_social_weight}, "
@@ -100,4 +101,3 @@ if __name__ == '__main__':
 
     print("best hyperparameters: ", f"inertial_weight = {best_inertial_weight}, social_weight={best_social_weight}, "
                                     f"cognitive_weight = {best_cognitive_weight}")
-    print("loss: ", best_loss)

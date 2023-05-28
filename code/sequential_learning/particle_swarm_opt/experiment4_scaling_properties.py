@@ -98,5 +98,3 @@ if __name__ == '__main__':
     print("accuracies:", accuracy_per_particlenumber.numpy())
     print("test-losses: ", test_loss_per_particlenumber.numpy())
     print("test-accuracies: ", test_accuracy_per_particlenumber.numpy())
-
-    # TODO maybe analyse wall clock time
