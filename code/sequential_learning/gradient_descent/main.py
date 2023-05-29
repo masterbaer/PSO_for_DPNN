@@ -66,9 +66,7 @@ if __name__ == '__main__':
     for images, labels in train_loader:
         image_shape = images.shape
         break
-    model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)
-
-    model = model.to(device)
+    model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes).cuda()
 
     optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 

@@ -23,7 +23,7 @@ def evaluate_model(model, test_data_loader):
         test_loss = test_loss + loss.item()
 
     loss_per_batch = test_loss / number_of_batches
-    accuracy = correct_pred.float() / num_examples
+    accuracy = (correct_pred.float() / num_examples).item()
     return loss_per_batch, accuracy
 
 

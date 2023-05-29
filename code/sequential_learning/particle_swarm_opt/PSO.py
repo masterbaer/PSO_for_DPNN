@@ -80,9 +80,15 @@ class PSO:
         self.model = model
         self.model = self.model.to(self.device)
         self.num_particles = num_particles
-        self.inertia_weight = inertia_weight
-        self.social_weight = social_weight
-        self.cognitive_weight = cognitive_weight
+        self.inertia_weight = torch.tensor(inertia_weight)
+        self.inertia_weight = self.inertia_weight.to(self.device)
+
+        self.social_weight = torch.tensor(social_weight)
+        self.social_weight = self.social_weight.to(self.device)
+
+        self.cognitive_weight = torch.tensor(cognitive_weight)
+        self.cognitive_weight = self.cognitive_weight.to(self.device)
+
         self.min_param_value = min_param_value
         self.max_param_value = max_param_value
         self.max_iterations = max_iterations
@@ -111,7 +117,7 @@ class PSO:
             particles_np = np.zeros((len(particles), num_weights))
             for particle_index, particle in enumerate(particles):
                 # Turn torch tensors to numpy in order to use sklearn's PCA.
-                particles_np[particle_index] = particle.position.numpy()
+                particles_np[particle_index] = particle.position.cpu().numpy()
             print("fitting pca on first generation")
             pca.fit(particles_np)
 
@@ -120,9 +126,9 @@ class PSO:
             for particle_index, particle in enumerate(particles):
                 # Update particle velocity and position
                 particle.velocity = (self.inertia_weight * particle.velocity +
-                                     self.cognitive_weight * torch.rand(1) *
+                                     self.cognitive_weight * torch.rand(1).to(self.device) *
                                      (particle.best_position - particle.position) +
-                                     self.social_weight * torch.rand(1) *
+                                     self.social_weight * torch.rand(1).to(self.device) *
                                      (global_best_position - particle.position))
                 particle.position += particle.velocity
 
@@ -158,7 +164,7 @@ class PSO:
             if visualize:
                 for particle_index, particle in enumerate(particles):
                     # Turn torch tensors to numpy in order to use sklearn's PCA.
-                    particles_np[particle_index] = particle.position.numpy()
+                    particles_np[particle_index] = particle.position.cpu().numpy()
 
                 particles_transformed[iteration] = pca.transform(particles_np)
 

@@ -28,7 +28,7 @@ def evaluate_model(model, test_data_loader):
 
     loss_per_batch = test_loss / number_of_batches
     accuracy = correct_pred.float() / num_examples
-    return loss_per_batch, accuracy
+    return loss_per_batch, accuracy.item()
 
 
 if __name__ == '__main__':
@@ -86,7 +86,11 @@ if __name__ == '__main__':
 
         loss, accuracy = evaluate_model(model, test_loader)
         print("final test loss: ", loss)
-        print("final test accuracy: ", accuracy.item())
+        print("final test accuracy: ", accuracy)
+
+        if best_loss == "nan":
+            print("ALERT, this should never happen. best_loss is nan!")
+            best_loss = float("inf")
 
         if loss < best_loss:
             best_loss = loss
