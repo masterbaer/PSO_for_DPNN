@@ -88,9 +88,9 @@ if __name__ == '__main__':
         print("final test loss: ", loss)
         print("final test accuracy: ", accuracy)
 
-        if best_loss == "nan":
+        if loss == "nan":
             print("ALERT, this should never happen. best_loss is nan!")
-            best_loss = float("inf")
+            continue
 
         if loss < best_loss:
             best_loss = loss

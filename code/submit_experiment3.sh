@@ -1,9 +1,9 @@
 #!/bin/bash
 
+#SBATCH --job-name=pso_small_nn_hyperparameter
 #SBATCH --partition=gpu_4
-#SBATCH --gres=gpu:4 # number of requested GPUs (GPU nodes shared btwn multiple jobs)
+#SBATCH --gres=gpu:1 # number of requested GPUs (GPU nodes shared btwn multiple jobs)
 #SBATCH --ntasks=4
-#SBATCH --ntasks-per-gpu=1
 #SBATCH --time=45:00 # wall-clock time limit
 #SBATCH --mem=128000
 #SBATCH --nodes=1
