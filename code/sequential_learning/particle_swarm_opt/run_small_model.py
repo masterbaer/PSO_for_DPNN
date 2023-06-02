@@ -67,8 +67,9 @@ if __name__ == '__main__':
 
     model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes).to(device)
 
-    pso = PSO(model=model, num_particles=3, inertia_weight=0.1,
-              social_weight=0.5, cognitive_weight=0.8, max_iterations=3, valid_loader=valid_loader, device=device)
+    pso = PSO(model=model, num_particles=10, inertia_weight=0.1,
+              social_weight=0.5, cognitive_weight=0.8, max_iterations=100,train_loader=train_loader,
+              valid_loader=valid_loader, device=device)
     global_best_loss, global_best_accuracy = pso.optimize()
     loss, accuracy = evaluate_model(model, test_loader)
 

@@ -53,10 +53,33 @@ def evaluate_position(model, data_loader, device):
 
         valid_loss = valid_loss + loss.item()
 
+        # The evaluation of the fitness function takes most time in PSO. Evaluation with a small size speeds up
+        # the training but reduces the generalization. For fast training, break here to use only one batch for training.
+        #break
+
     loss_per_batch = valid_loss / number_of_batches
     accuracy = (correct_pred.float() / num_examples).item()
     return loss_per_batch, accuracy
 
+
+def evaluate_position_single_batch(model, inputs, labels, device):
+    #  Compute Loss
+    model = model.to(device)
+    inputs = inputs.to(device)
+    labels = labels.to(device)
+
+    loss_fn = torch.nn.CrossEntropyLoss()
+    number_of_samples = len(inputs)
+
+    predictions = model(inputs)  # Calculate model output.
+    _, predicted = torch.max(predictions, dim=1)  # Determine class with max. probability for each sample.
+    num_examples = labels.size(0)  # Update overall number of considered samples.
+    correct_pred = (predicted == labels).sum()  # Update overall number of correct predictions.
+    loss_total = loss_fn(predictions, labels).item()
+
+    #loss_per_sample = loss / number_of_samples
+    accuracy = (correct_pred.float() / num_examples).item()
+    return loss_total, accuracy
 
 class Particle:
 
@@ -85,6 +108,7 @@ class PSO:
                  social_weight: float,
                  cognitive_weight: float,
                  max_iterations: int,
+                 train_loader,
                  valid_loader,
                  device):
         self.device = device
@@ -102,6 +126,7 @@ class PSO:
         self.cognitive_weight = torch.tensor(cognitive_weight).to(self.device)
 
         self.max_iterations = max_iterations
+        self.train_loader = train_loader
         self.valid_loader = valid_loader
 
     def optimize(self, evaluate=True):
@@ -112,7 +137,6 @@ class PSO:
                 particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)
                 print("particle,loss,accuracy = ",
                       (particle_index + 1, round(particle_loss, 3), round(particle_accuracy, 5)))
-
         # num_weights = sum(p.numel() for p in self.particles[0].model.parameters())
 
         global_best_loss = float('inf')
@@ -123,8 +147,17 @@ class PSO:
         particle_loss_list = torch.zeros(len(self.particles), self.max_iterations)
         particle_accuracy_list = torch.zeros(len(self.particles), self.max_iterations)
 
+        train_generator = iter(self.train_loader)
         #  Training Loop
         for iteration in range(self.max_iterations):
+            try:
+                train_inputs, train_labels = next(train_generator)
+            except StopIteration:
+                train_generator = iter(self.train_loader)
+                train_inputs, train_labels = next(train_generator)
+            train_inputs = train_inputs.to(self.device)
+            train_labels = train_labels.to(self.device)
+
             for particle_index, particle in enumerate(self.particles):
                 particle.model = particle.model.to(self.device)
                 particle.best_model = particle.best_model.to(self.device)
@@ -132,6 +165,7 @@ class PSO:
 
                 with torch.no_grad():
                     # Update particle velocity and position.
+
                     for i, (param_current, g_best, p_best, velocity_current) in enumerate(
                             zip(particle.model.parameters(), global_best_model.parameters(),
                                 particle.best_model.parameters(), particle.velocity.parameters())):
@@ -146,7 +180,10 @@ class PSO:
                         param_current.add_(velocity)
 
                 # Evaluate particle fitness using the fitness function
-                particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)
+
+                #particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)
+                particle_loss, particle_accuracy = evaluate_position_single_batch(particle.model, train_inputs, train_labels, self.device)
+
                 if evaluate:
                     particle_loss_list[particle_index, iteration] = particle_loss
                     particle_accuracy_list[particle_index, iteration] = particle_accuracy
@@ -171,6 +208,9 @@ class PSO:
                 particle.model = particle.model.to("cpu")
                 particle.best_model = particle.best_model.to("cpu")
                 particle.velocity = particle.velocity.to("cpu")
+
+                #end6 = time.time()
+                #print("updating gbest and converting to cpu took: ", end6 - start6, "seconds ")
 
             # if iteration % 20 == 0:
             print(f"Iteration {iteration + 1}/{self.max_iterations}, Best Loss: {global_best_loss}")

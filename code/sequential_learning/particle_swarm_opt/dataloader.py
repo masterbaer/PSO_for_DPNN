@@ -85,11 +85,11 @@ def get_dataloaders_cifar10(batch_size,
 
 
 def get_dataloaders_mnist(batch_size,
-                           num_workers=0,
-                           root='../../data',
-                           validation_fraction=0.1,
-                           train_transforms=None,
-                           test_transforms=None):
+                          num_workers=0,
+                          root='../../data',
+                          validation_fraction=0.1,
+                          train_transforms=None,
+                          test_transforms=None):
     if train_transforms is None:
         train_transforms = torchvision.transforms.ToTensor()
 

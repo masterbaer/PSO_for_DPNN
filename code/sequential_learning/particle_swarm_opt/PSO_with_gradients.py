@@ -49,6 +49,8 @@ def evaluate_position(model, data_loader, device):
 
         valid_loss = valid_loss + loss.item()
 
+        #break
+
     loss_per_batch = valid_loss / number_of_batches
     accuracy = (correct_pred.float() / num_examples).item()
     return loss_per_batch, accuracy

@@ -67,7 +67,7 @@ if __name__ == '__main__':
     model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes).to(device)
 
     pso = PSOWithGradients(model=model, num_particles=1, inertia_weight=0.0,
-              social_weight=0.0, cognitive_weight=0.0, max_iterations=10, train_loader=train_loader,
+              social_weight=0.0, cognitive_weight=0.0, max_iterations=175, train_loader=train_loader,
                            valid_loader=valid_loader, learning_rate=0.01, device=device)
 
     global_best_loss, global_best_accuracy = pso.optimize()
