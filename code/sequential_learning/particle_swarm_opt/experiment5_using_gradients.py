@@ -1,12 +1,11 @@
 import numpy as np
 import torch
 import torchvision
-from numpy.random import random_sample
 from torchvision import transforms
 
 from dataloader import get_dataloaders_mnist, get_dataloaders_cifar10
 from model import NeuralNetwork
-from PSO import PSO
+from PSO_with_gradients import PSOWithGradients
 
 
 def evaluate_model(model, test_data_loader):
@@ -27,8 +26,8 @@ def evaluate_model(model, test_data_loader):
         test_loss = test_loss + loss.item()
 
     loss_per_batch = test_loss / number_of_batches
-    accuracy = correct_pred.float() / num_examples
-    return loss_per_batch, accuracy.item()
+    accuracy = (correct_pred.float() / num_examples).item()
+    return loss_per_batch, accuracy
 
 
 if __name__ == '__main__':
@@ -65,43 +64,15 @@ if __name__ == '__main__':
         image_shape = images.shape
         break
 
-    model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)
+    model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes).to(device)
 
-    number_of_random_tries = 10
-    best_inertial_weight = 0
-    best_social_weight = 0
-    best_cognitive_weight = 0
-    best_loss = float("inf")
+    pso = PSOWithGradients(model=model, num_particles=1, inertia_weight=0.0,
+              social_weight=0.0, cognitive_weight=0.0, max_iterations=10, train_loader=train_loader,
+                           valid_loader=valid_loader, learning_rate=0.01, device=device)
 
-    for _ in range(number_of_random_tries):
-        inertial_weight = (2 - 0) * random_sample() + 0
-        social_weight = (2 - 0) * random_sample() + 0
-        cognitive_weight = (2 - 0) * random_sample() + 0
-        print("current values: (inertial,social,cognitive) = ", inertial_weight, social_weight, cognitive_weight)
-        pso = PSO(model=model, num_particles=10, inertia_weight=inertial_weight,
-                  social_weight=social_weight, cognitive_weight=cognitive_weight, min_param_value=-1,
-                  max_param_value=1, max_iterations=100, train_loader=valid_loader, device=device)
+    global_best_loss, global_best_accuracy = pso.optimize()
 
-        pso.optimize(visualize=False, evaluate=False)
-
-        loss, accuracy = evaluate_model(model, test_loader)
-        print("final test loss: ", loss)
-        print("final test accuracy: ", accuracy)
-
-        if loss == "nan":
-            print("ALERT, this should never happen. best_loss is nan!")
-            continue
-
-        if loss < best_loss:
-            best_loss = loss
-            best_inertial_weight = inertial_weight
-            best_social_weight = social_weight
-            best_cognitive_weight = cognitive_weight
-            print("better solution found, new best loss: ", best_loss)
-
-        print("best hyperparameters so far: ",
-              f"inertial_weight = {best_inertial_weight}, social_weight={best_social_weight}, "
-              f"cognitive_weight = {best_cognitive_weight}")
-
-    print("best hyperparameters: ", f"inertial_weight = {best_inertial_weight}, social_weight={best_social_weight}, "
-                                    f"cognitive_weight = {best_cognitive_weight}")
+    # final loss on test set
+    loss, accuracy = evaluate_model(model, test_loader)
+    print("final test loss: ", loss)
+    print("final test accuracy: ", accuracy)

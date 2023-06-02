@@ -1,24 +1,31 @@
 import numpy as np
 import torch
-from sklearn.decomposition import IncrementalPCA, PCA
+from sklearn.decomposition import PCA
+import copy
+from model import *
+
+from torch import nn
 
 
-# Adapted from the torch-pso implementation
-# See https://github.com/qthequartermasterman/torch_pso/blob/master/torch_pso/optim/ParticleSwarmOptimizer.py
+def reset_all_weights(model: nn.Module) -> None:
+    """
+    copied from: https://discuss.pytorch.org/t/how-to-re-set-alll-parameters-in-a-network/20819/11
 
-def extract_weights(model):
-    weights = []
-    for param in model.parameters():
-        weights.append(param.data.view(-1))
-    return torch.cat(weights)
+    refs:
+        - https://discuss.pytorch.org/t/how-to-re-set-alll-parameters-in-a-network/20819/6
+        - https://stackoverflow.com/questions/63627997/reset-parameters-of-a-neural-network-in-pytorch
+        - https://pytorch.org/docs/stable/generated/torch.nn.Module.html
+    """
 
+    @torch.no_grad()
+    def weight_reset(m: nn.Module):
+        # - check if the current module has reset_parameters & if it's callabed called it on m
+        reset_parameters = getattr(m, "reset_parameters", None)
+        if callable(reset_parameters):
+            m.reset_parameters()
 
-def set_weights(model, flattened_weights):
-    start = 0
-    for param in model.parameters():
-        end = start + param.numel()
-        param.data.copy_(flattened_weights[start:end].reshape(param.shape))
-        start = end
+    # Applies fn recursively to every submodule see: https://pytorch.org/docs/stable/generated/torch.nn.Module.html
+    model.apply(fn=weight_reset)
 
 
 # The particle evaluation is similar to the validation process.
@@ -43,131 +50,171 @@ def evaluate_position(model, data_loader, device):
         valid_loss = valid_loss + loss.item()
 
     loss_per_batch = valid_loss / number_of_batches
-    accuracy = correct_pred.float() / num_examples
+    accuracy = (correct_pred.float() / num_examples).item()
     return loss_per_batch, accuracy
 
 
 class Particle:
 
-    def __init__(self, num_weights, min_param_value, max_param_value, device):
+    def __init__(self, model):
         # maybe only save the parameters?
-        self.device = device
-        self.position = (max_param_value - min_param_value) * torch.rand(num_weights) + min_param_value
-        self.position = self.position.to(self.device)
 
-        self.velocity = (max_param_value - min_param_value) * torch.rand(num_weights) + min_param_value
-        self.velocity = self.velocity.to(self.device)
+        # initialize the particle randomly
+        self.model = copy.deepcopy(model)
+        reset_all_weights(self.model)
 
-        self.best_position = self.position.detach().clone()
-        self.best_position = self.best_position.to(self.device)
+        self.velocity = copy.deepcopy(model)
+        reset_all_weights(self.velocity)
+
+        self.best_model = copy.deepcopy(self.model)
 
         self.best_loss = float('inf')  # Change to the best accuracy/fitness?
 
 
-class PSO:
+class PSOWithGradients:
     def __init__(self,
                  model,
                  num_particles: int,
                  inertia_weight: float,
                  social_weight: float,
                  cognitive_weight: float,
-                 min_param_value: float,
-                 max_param_value: float,
                  max_iterations: int,
+                 learning_rate: float,
+                 valid_loader,
                  train_loader,
                  device):
         self.device = device
-        self.model = model
-        self.model = self.model.to(self.device)
-        self.num_particles = num_particles
-        self.inertia_weight = inertia_weight
-        self.social_weight = social_weight
-        self.cognitive_weight = cognitive_weight
-        self.min_param_value = min_param_value
-        self.max_param_value = max_param_value
-        self.max_iterations = max_iterations
-        self.train_loader = train_loader
 
+        self.model = model
+
+        self.num_particles = num_particles
+
+        self.particles = []
+        for i in range(self.num_particles):
+            self.particles.append(Particle(self.model))
+
+        self.inertia_weight = torch.tensor(inertia_weight).to(self.device)
+        self.social_weight = torch.tensor(social_weight).to(self.device)
+        self.cognitive_weight = torch.tensor(cognitive_weight).to(self.device)
+
+        self.learning_rate = torch.tensor(learning_rate).to(self.device)
+        self.max_iterations = max_iterations
+        self.valid_loader = valid_loader
+        self.train_loader = train_loader  # for gradient calculation
 
     def optimize(self, visualize=False, evaluate=True):
-        num_weights = sum(p.numel() for p in self.model.parameters())
-        particles = [Particle(num_weights, self.min_param_value, self.max_param_value, self.device) for _ in
-                     range(self.num_particles)]
+
+        print("initial evaluation")
+        with torch.no_grad():
+            for particle_index, particle in enumerate(self.particles):
+                particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)
+                print("particle,loss,accuracy = ",
+                      (particle_index + 1, round(particle_loss, 3), round(particle_accuracy, 5)))
+
+        # num_weights = sum(p.numel() for p in self.particles[0].model.parameters())
+
         global_best_loss = float('inf')
         global_best_accuracy = 0.0
-        global_best_position = particles[0].best_position  # init as first particle position
+        global_best_model = copy.deepcopy(self.particles[0].model).to(self.device)  # Init as the first model
 
-        particle_loss_list = torch.zeros(len(particles), self.max_iterations)
-        particle_accuracy_list = torch.zeros(len(particles), self.max_iterations)
+        particle_loss_list = torch.zeros(len(self.particles), self.max_iterations)
+        particle_accuracy_list = torch.zeros(len(self.particles), self.max_iterations)
 
-        #  Use PCA for visualization, this may use too much RAM for large models and many particles.
-        #  Use the "fit" method only on first generation. Use "transform" on every particle in each iteration.
+        # https://stackoverflow.com/questions/47714643/pytorch-data-loader-multiple-iterations
+        # code snippet to repeat the train loader
+        # train_generator = iter(self.train_loader)
+        # for i in range(1000):
+        #    try:
+        #        x, y = next(train_generator)
+        #    except StopIteration:
+        #        train_generator = iter(self.train_loader)
+        #        x, y = next(train_generator)
 
-        pca = PCA(n_components=2)
-        particles_transformed = None
-        particles_np = None
-        if visualize:
-            particles_transformed = np.zeros((self.max_iterations, len(particles), 2))
-            particles_np = np.zeros((len(particles), num_weights))
-            for particle_index, particle in enumerate(particles):
-                # Turn torch tensors to numpy in order to use sklearn's PCA.
-                particles_np[particle_index] = particle.position.numpy()
-            print("fitting pca on first generation")
-            pca.fit(particles_np)
+        train_generator = iter(self.train_loader)
+
+        self.model.train()  # Set model to training mode.
 
         #  Training Loop
         for iteration in range(self.max_iterations):
-            for particle_index, particle in enumerate(particles):
-                # Update particle velocity and position
-                particle.velocity = (self.inertia_weight * particle.velocity +
-                                     self.cognitive_weight * torch.rand(1) *
-                                     (particle.best_position - particle.position) +
-                                     self.social_weight * torch.rand(1) *
-                                     (global_best_position - particle.position))
-                particle.position += particle.velocity
+            for particle_index, particle in enumerate(self.particles):
+                particle.model = particle.model.to(self.device)
+                particle.best_model = particle.best_model.to(self.device)
+                particle.velocity = particle.velocity.to(self.device)
 
-                # Update neural network weights using the particle's position
-                set_weights(self.model, particle.position)
+                try:
+                    train_inputs, train_labels = next(train_generator)
+                except StopIteration:
+                    train_generator = iter(self.train_loader)
+                    train_inputs, train_labels = next(train_generator)
+                train_inputs = train_inputs.to(self.device)
+                train_labels = train_labels.to(self.device)
+
+                # calculate gradient with respect to training batch
+                # in "https://github.com/caio-davi/PSO-PINN/blob/main/src/swarm/optimizers/fss.py"
+                # the fitness function returns gradients i.e. the whole (training) dataset is used
+                # We use a training batch to calculate the gradient
+
+                outputs = particle.model(train_inputs)
+                loss_fn = torch.nn.CrossEntropyLoss()
+                particle.model.zero_grad()
+                loss = loss_fn(outputs, train_labels)
+                loss.backward()
+
+                with torch.no_grad():
+                    # Update particle velocity and position. The methods with '_' are in place operations.
+                    for i, (param_current, g_best, p_best, velocity_current) in enumerate(
+                            zip(particle.model.parameters(), global_best_model.parameters(),
+                                particle.best_model.parameters(), particle.velocity.parameters())):
+                        social_component = self.social_weight * torch.rand(1).to(self.device) * (
+                                g_best.data - param_current.data)
+
+                        cognitive_component = self.cognitive_weight * torch.rand(1).to(self.device) * (
+                                p_best.data - param_current.data)
+
+                        velocity = velocity_current * self.inertia_weight + social_component + cognitive_component - \
+                                   param_current.grad * self.learning_rate
+
+                        param_current.add_(velocity)
 
                 # Evaluate particle fitness using the fitness function
-                particle_loss, particle_accuracy = evaluate_position(self.model, self.train_loader, self.device)
+                particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)
                 if evaluate:
                     particle_loss_list[particle_index, iteration] = particle_loss
                     particle_accuracy_list[particle_index, iteration] = particle_accuracy
 
-                #if iteration % 20 == 0:
-                #    print(f"(particle,loss,accuracy) = "
-                #          f"{(particle_index + 1, round(particle_loss, 3), round(particle_accuracy.item(), 3))}")
+                # if iteration % 20 == 0:
+                print(f"(particle,loss,accuracy) = "
+                      f"{(particle_index + 1, round(particle_loss, 3), round(particle_accuracy, 3))}")
 
                 # Update particle's best position and fitness
                 if particle_loss < particle.best_loss:
                     particle.best_loss = particle_loss
-                    particle.best_position = particle.position.clone()
+                    particle.best_model = copy.deepcopy(particle.model)
 
                 # Update global best position and fitness
                 if particle_loss < global_best_loss:
                     global_best_loss = particle_loss
-                    global_best_position = particle.position.clone()
+                    global_best_model = copy.deepcopy(particle.model)
 
                 if particle_accuracy > global_best_accuracy:
                     global_best_accuracy = particle_accuracy
-            if iteration % 20 == 0:
-                print(f"Iteration {iteration + 1}/{self.max_iterations}, Best Loss: {global_best_loss}")
 
-            #  Transforming Data for visualization
-            if visualize:
-                for particle_index, particle in enumerate(particles):
-                    # Turn torch tensors to numpy in order to use sklearn's PCA.
-                    particles_np[particle_index] = particle.position.numpy()
+                particle.model = particle.model.to("cpu")
+                particle.best_model = particle.best_model.to("cpu")
+                particle.velocity = particle.velocity.to("cpu")
 
-                particles_transformed[iteration] = pca.transform(particles_np)
+            # if iteration % 20 == 0:
+            print(f"Iteration {iteration + 1}/{self.max_iterations}, Best Loss: {global_best_loss}")
 
         if evaluate:
             torch.save(particle_loss_list, "particle_loss_list.pt")
             torch.save(particle_accuracy_list, "particle_accuracy_list.pt")
 
-        if visualize:
-            torch.save(particles_transformed, "pca_weights.pt")
+        # overwrite the initial models parameters
+        self.model.load_state_dict(global_best_model.state_dict())
 
-        # the global best accuracy does not have to match to the best loss here
         return global_best_loss, global_best_accuracy
+
+# TODO plot training loss as well, not only validation loss
+# TODO Zeit für alle Schritte tracken - wie lange dauert das laden der Modelle im Vergleich zum eigentlichen training/evaluation
+# gehört vielleicht zu "skalierbarkeit"

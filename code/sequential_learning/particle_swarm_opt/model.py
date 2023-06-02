@@ -20,6 +20,7 @@ class NeuralNetwork(nn.Module):
         logits = self.linear_relu_stack(x)
         return logits
 
+# TODO convolutions später
 
 class AlexNet(nn.Module):
     def __init__(self, num_classes=10, dropout=0.5):

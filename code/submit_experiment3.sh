@@ -19,4 +19,4 @@ source venv/bin/activate      # Activate your virtual environment.
 
 unset SLURM_NTASKS_PER_TRES
 
-srun python -u sequential_learning/particle_swarm_opt/experiment3_hyperparameter.py
+srun python -u sequential_learning/particle_swarm_opt_initial_attempt/experiment3_hyperparameter.py
