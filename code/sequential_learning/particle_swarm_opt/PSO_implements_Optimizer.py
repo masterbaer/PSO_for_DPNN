@@ -12,6 +12,8 @@ from model import *
 
 from torch import nn
 
+# TODO implement this class when absolutely necessary.
+
 
 def reset_all_weights(model: nn.Module) -> None:
     """

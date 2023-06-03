@@ -1,11 +1,11 @@
 import torch
 import torchvision
 
-from dataloader import get_dataloaders_cifar10
+from dataloader import get_dataloaders_cifar10, get_dataloaders_cifar10_half_training_batch_size
 from model import NeuralNetwork
 
+#from PSO_maxmin_against_overestimation import PSO
 from PSO import PSO
-
 
 
 def evaluate_model(model, test_data_loader):
@@ -46,6 +46,7 @@ if __name__ == '__main__':
     ])
 
     # GET PYTORCH DATALOADERS FOR TRAINING, TESTING, AND VALIDATION DATASET.
+
     train_loader, valid_loader, test_loader = get_dataloaders_cifar10(
         batch_size=b,
         root="../../data",
@@ -54,6 +55,8 @@ if __name__ == '__main__':
         train_transforms=cifar_10_transforms,
         test_transforms=cifar_10_transforms
     )
+
+
 
     num_classes = 10
 
@@ -65,12 +68,14 @@ if __name__ == '__main__':
         image_shape = images.shape
         break
 
-    model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes).to(device)
+    model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes) # keep in cpu
 
-    pso = PSO(model=model, num_particles=10, inertia_weight=0.1,
-              social_weight=0.5, cognitive_weight=0.8, max_iterations=100,train_loader=train_loader,
+    pso = PSO(model=model, num_particles=20, inertia_weight=0.1,
+              social_weight=0.5, cognitive_weight=0.8, max_iterations=200, train_loader=train_loader,
               valid_loader=valid_loader, device=device)
     global_best_loss, global_best_accuracy = pso.optimize()
+
+    model = model.to(device) # for evaluation use in gpu
     loss, accuracy = evaluate_model(model, test_loader)
 
     # final loss on test set

@@ -5,22 +5,10 @@ from model import *
 
 from torch import nn
 
-# Benchmark: Using normal SGD, 175 batches per epoch, ReduceLROnPlateau: factor=0.1, mode='max', verbose=True
-#                                                                            Loss: 2.3024 (on first training batch)
-# Epoch: 001/040 | Train: 0.43 | Validation: 0.41 , Time elapsed: 0.80 min , Loss: 1.7122
-# Epoch: 002/040 | Train: 0.47 | Validation: 0.44 , Time elapsed: 1.64 min
-# Epoch: 003/040 | Train: 0.50 | Validation: 0.48  , Time elapsed: 2.45 min
-# Epoch: 004/040 | Train: 0.53 | Validation: 0.49, Time elapsed: 3.29 min
-# Epoch: 005/040 | Train: 0.54 | Validation: 0.50, Time elapsed: 4.11 min
-# Epoch: 006/040 | Train: 0.56 | Validation: 0.51 , Time elapsed: 4.91 min
-# Epoch: 007/040 | Train: 0.58 | Validation: 0.52 , Time elapsed: 5.71 min
-# Epoch: 008/040 | Train: 0.59 | Validation: 0.53 , Time elapsed: 6.51 min
-# Epoch: 011/040 | Train: 0.62 | Validation: 0.54 , Time elapsed: 8.83 min , Loss 1.1689
-# Epoch: 014/040 | Train: 0.64 | Validation: 0.55 , Time elapsed: 11.23 min, Loss: 1.2129
-# Epoch: 017/040 | Train: 0.68 | Validation: 0.56 , Time elapsed: 13.59 min, Loss: 1.1200
-# Epoch: 020/040 | Train: 0.70 | Validation: 0.57 , Time elapsed: 15.93 min , Loss: 1.0405
-# Epoch: 031/040 | Train: 0.77 | Validation: 0.57, Time elapsed: 24.45 min , Loss: 0.7542
-# Epoch: 040/040 | Train: 0.82 | Validation: 0.57, Time elapsed: 31.52 min , Loss: 0.4544 (test accuracy 57%)
+# To avoid overestimation on small training batches, we use two smaller training batches and use the worse evaluation
+# as the fitness evaluation. In this small example there is no significant difference as normal PSO is unable to train
+# properly. TODO: Try this approach again along with other tricks to make PSO work.
+# Use get_dataloaders_cifar10_half_training_batch_size to use half the training batch size to be comparable.
 
 def reset_all_weights(model: nn.Module) -> None:
     """
@@ -144,13 +132,16 @@ class PSO:
 
     def optimize(self, evaluate=True):
 
-        print("initial evaluation")
-        with torch.no_grad():
-            for particle_index, particle in enumerate(self.particles):
-                particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)
-                print("particle,loss,accuracy = ",
-                      (particle_index + 1, round(particle_loss, 3), round(particle_accuracy, 5)))
+        # not necessary and not used for training
+        #print("initial evaluation")
+        #with torch.no_grad():
+        #    for particle_index, particle in enumerate(self.particles):
+        #        particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)
+        #        print("particle,loss,accuracy = ",
+        #              (particle_index + 1, round(particle_loss, 3), round(particle_accuracy, 5)))
+
         # num_weights = sum(p.numel() for p in self.particles[0].model.parameters())
+
 
         global_best_loss = float('inf')
         global_best_accuracy = 0.0
@@ -163,13 +154,24 @@ class PSO:
         train_generator = iter(self.train_loader)
         #  Training Loop
         for iteration in range(self.max_iterations):
+
+            # Get two training batches and use the worse one as evaluation to prevent overestimation.
             try:
-                train_inputs, train_labels = next(train_generator)
+                train_inputs1, train_labels1 = next(train_generator)
             except StopIteration:
                 train_generator = iter(self.train_loader)
-                train_inputs, train_labels = next(train_generator)
-            train_inputs = train_inputs.to(self.device)
-            train_labels = train_labels.to(self.device)
+                train_inputs1, train_labels1 = next(train_generator)
+            train_inputs1 = train_inputs1.to(self.device)
+            train_labels1 = train_labels1.to(self.device)
+
+            try:
+                train_inputs2, train_labels2 = next(train_generator)
+            except StopIteration:
+                train_generator = iter(self.train_loader)
+                train_inputs2, train_labels2 = next(train_generator)
+            train_inputs2 = train_inputs1.to(self.device)
+            train_labels2 = train_labels1.to(self.device)
+
 
             for particle_index, particle in enumerate(self.particles):
                 particle.model = particle.model.to(self.device)
@@ -194,8 +196,18 @@ class PSO:
 
                 # Evaluate particle fitness using the fitness function
 
-                #particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)
-                particle_loss, particle_accuracy = evaluate_position_single_batch(particle.model, train_inputs, train_labels, self.device)
+                particle_loss1, particle_accuracy1 = evaluate_position_single_batch(particle.model, train_inputs1, train_labels1, self.device)
+                particle_loss2, particle_accuracy2 = evaluate_position_single_batch(particle.model, train_inputs2, train_labels2, self.device)
+
+                # Evaluate using the worse loss of both
+                particle_loss = None
+                particle_accuracy = None
+                if particle_loss1 > particle_loss2:
+                    particle_loss = particle_loss1
+                    particle_accuracy = particle_accuracy1
+                else:
+                    particle_loss = particle_loss2
+                    particle_accuracy = particle_accuracy2
 
                 if evaluate:
                     particle_loss_list[particle_index, iteration] = particle_loss
@@ -227,7 +239,6 @@ class PSO:
                 print(f"Iteration {iteration + 1}/{self.max_iterations}, Best Loss: {global_best_loss}")
 
 
-        # TODO timestamp/hyperparameter/modell in Namen reintun
         if evaluate:
             torch.save(particle_loss_list, "particle_loss_list.pt")
             torch.save(particle_accuracy_list, "particle_accuracy_list.pt")

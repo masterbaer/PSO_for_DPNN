@@ -7,6 +7,14 @@ from model import *
 from torch import nn
 
 
+# This optimizer is from PSO-PINN. https://arxiv.org/pdf/2202.01943.pdf
+# The gradient is used as another velocity component and the social and cognitivce coefficients
+# decay with 1/n where n is the number of iterations.
+
+# In contrast to the paper we also let the inertia decay since otherwise the loss explodes (with given inertia).
+# At some point, however, this becomes normal SGD with many neural networks in parallel.
+
+
 def reset_all_weights(model: nn.Module) -> None:
     """
     copied from: https://discuss.pytorch.org/t/how-to-re-set-alll-parameters-in-a-network/20819/11
@@ -49,11 +57,31 @@ def evaluate_position(model, data_loader, device):
 
         valid_loss = valid_loss + loss.item()
 
-        #break
+        # break
 
     loss_per_batch = valid_loss / number_of_batches
     accuracy = (correct_pred.float() / num_examples).item()
     return loss_per_batch, accuracy
+
+
+def evaluate_position_single_batch(model, inputs, labels, device):
+    #  Compute Loss
+    model = model.to(device)
+    inputs = inputs.to(device)
+    labels = labels.to(device)
+
+    loss_fn = torch.nn.CrossEntropyLoss()
+    number_of_samples = len(inputs)
+
+    predictions = model(inputs)  # Calculate model output.
+    _, predicted = torch.max(predictions, dim=1)  # Determine class with max. probability for each sample.
+    num_examples = labels.size(0)  # Update overall number of considered samples.
+    correct_pred = (predicted == labels).sum()  # Update overall number of correct predictions.
+    loss_total = loss_fn(predictions, labels).item()
+
+    # loss_per_sample = loss / number_of_samples
+    accuracy = (correct_pred.float() / num_examples).item()
+    return loss_total, accuracy
 
 
 class Particle:
@@ -106,12 +134,12 @@ class PSOWithGradients:
 
     def optimize(self, visualize=False, evaluate=True):
 
-        print("initial evaluation")
-        with torch.no_grad():
-            for particle_index, particle in enumerate(self.particles):
-                particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)
-                print("particle,loss,accuracy = ",
-                      (particle_index + 1, round(particle_loss, 3), round(particle_accuracy, 5)))
+        # print("initial evaluation")
+        # with torch.no_grad():
+        #    for particle_index, particle in enumerate(self.particles):
+        #        particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)
+        #        print("particle,loss,accuracy = ",
+        #              (particle_index + 1, round(particle_loss, 3), round(particle_accuracy, 5)))
 
         # num_weights = sum(p.numel() for p in self.particles[0].model.parameters())
 
@@ -138,18 +166,25 @@ class PSOWithGradients:
 
         #  Training Loop
         for iteration in range(self.max_iterations):
+
+            # decay coefficient for social and cognitive components from PSO-PINN
+            one_over_n = torch.tensor(1 / (iteration + 1)).to(self.device)
+
+            # Use training batches for fitness evaluation and for gradient computation.
+            try:
+                train_inputs, train_labels = next(train_generator)
+            except StopIteration:
+                train_generator = iter(self.train_loader)
+                train_inputs, train_labels = next(train_generator)
+            train_inputs = train_inputs.to(self.device)
+            train_labels = train_labels.to(self.device)
+
+            # TODO: maybe give each particle other data for gradient computation?
+
             for particle_index, particle in enumerate(self.particles):
                 particle.model = particle.model.to(self.device)
                 particle.best_model = particle.best_model.to(self.device)
                 particle.velocity = particle.velocity.to(self.device)
-
-                try:
-                    train_inputs, train_labels = next(train_generator)
-                except StopIteration:
-                    train_generator = iter(self.train_loader)
-                    train_inputs, train_labels = next(train_generator)
-                train_inputs = train_inputs.to(self.device)
-                train_labels = train_labels.to(self.device)
 
                 # calculate gradient with respect to training batch
                 # in "https://github.com/caio-davi/PSO-PINN/blob/main/src/swarm/optimizers/fss.py"
@@ -160,33 +195,37 @@ class PSOWithGradients:
                 loss_fn = torch.nn.CrossEntropyLoss()
                 particle.model.zero_grad()
                 loss = loss_fn(outputs, train_labels)
-                loss.backward()
+                loss.backward()  # gradients are in param_current.grad for param in particle.model.parameters()
 
                 with torch.no_grad():
                     # Update particle velocity and position. The methods with '_' are in place operations.
                     for i, (param_current, g_best, p_best, velocity_current) in enumerate(
                             zip(particle.model.parameters(), global_best_model.parameters(),
                                 particle.best_model.parameters(), particle.velocity.parameters())):
-                        social_component = self.social_weight * torch.rand(1).to(self.device) * (
+                        social_component = one_over_n * self.social_weight * torch.rand(1).to(self.device) * (
                                 g_best.data - param_current.data)
 
-                        cognitive_component = self.cognitive_weight * torch.rand(1).to(self.device) * (
+                        cognitive_component = one_over_n * self.cognitive_weight * torch.rand(1).to(self.device) * (
                                 p_best.data - param_current.data)
 
-                        velocity = velocity_current * self.inertia_weight + social_component + cognitive_component - \
-                                   param_current.grad * self.learning_rate
+                        velocity = one_over_n * velocity_current * self.inertia_weight + social_component + \
+                                   cognitive_component - param_current.grad * self.learning_rate
+                        # The velocity is also decaying here unlike in the paper.
 
                         param_current.add_(velocity)
 
                 # Evaluate particle fitness using the fitness function
-                particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)
+                # particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)
+                particle_loss, particle_accuracy = evaluate_position_single_batch(
+                    particle.model, train_inputs, train_labels, self.device)
+
                 if evaluate:
                     particle_loss_list[particle_index, iteration] = particle_loss
                     particle_accuracy_list[particle_index, iteration] = particle_accuracy
 
-                # if iteration % 20 == 0:
-                print(f"(particle,loss,accuracy) = "
-                      f"{(particle_index + 1, round(particle_loss, 3), round(particle_accuracy, 3))}")
+                if iteration % 20 == 0:
+                    print(f"(particle,loss,accuracy) = "
+                          f"{(particle_index + 1, round(particle_loss, 3), round(particle_accuracy, 3))}")
 
                 # Update particle's best position and fitness
                 if particle_loss < particle.best_loss:
@@ -205,8 +244,8 @@ class PSOWithGradients:
                 particle.best_model = particle.best_model.to("cpu")
                 particle.velocity = particle.velocity.to("cpu")
 
-            # if iteration % 20 == 0:
-            print(f"Iteration {iteration + 1}/{self.max_iterations}, Best Loss: {global_best_loss}")
+            if iteration % 20 == 0:
+                print(f"Iteration {iteration + 1}/{self.max_iterations}, Best Loss: {global_best_loss}")
 
         if evaluate:
             torch.save(particle_loss_list, "particle_loss_list.pt")
@@ -216,7 +255,3 @@ class PSOWithGradients:
         self.model.load_state_dict(global_best_model.state_dict())
 
         return global_best_loss, global_best_accuracy
-
-# TODO plot training loss as well, not only validation loss
-# TODO Zeit für alle Schritte tracken - wie lange dauert das laden der Modelle im Vergleich zum eigentlichen training/evaluation
-# gehört vielleicht zu "skalierbarkeit"
