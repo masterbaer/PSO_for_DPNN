@@ -7,35 +7,6 @@ import torch
 import numpy as np
 
 
-def print_losses():
-    losses = torch.load('particle_loss_list.pt')
-    particle_size, iterations = losses.shape
-
-    x = list(range(1, iterations))
-
-    for i in range(particle_size):
-        plt.plot(x, losses[i][x], label=f"Particle {i + 1}")
-
-    plt.legend(loc='best')
-    plt.ylabel("losses")
-    plt.show()
-    plt.cla()
-
-
-def get_global_losses():
-    losses = torch.load('particle_loss_list.pt')
-    particle_size, iterations = losses.shape
-
-    # print the best losses until that iteration
-    gbest_list = torch.full((iterations,), float('inf'))
-
-    gbest_list[0] = torch.min(losses[:, 0])
-    for i in range(iterations - 1):
-        new_best_loss = torch.min(losses[:, i + 1])
-        gbest_list[i + 1] = torch.min(gbest_list[i], new_best_loss)
-    return gbest_list
-
-
 def get_global_accuracies():
     losses = torch.load("particle_loss_list.pt")  # (particle,iteration)
     accuracies = torch.load("particle_accuracy_list.pt")
@@ -69,21 +40,13 @@ def get_global_accuracies():
     return best_accuracies
 
 
-def print_global_loss():
-    gbest_list = get_global_losses()
-    plt.plot(gbest_list)
-    plt.ylabel("global best loss")
-    plt.show()
-    plt.cla()
-
-
 def print_global_accuracy():
     best_accuracies = get_global_accuracies()
     plt.plot(best_accuracies)
     plt.ylabel("global accuracy")
 
-    plt.savefig("global_accuracy_pso_bp_cd.png")
-    #plt.show()
+    plt.savefig("global_accuracy_pso_with_gradients.png")
+    # plt.show()
     plt.cla()
 
 
@@ -100,6 +63,7 @@ def print_accuracies():
     plt.ylabel("accuracies")
     plt.show()
     plt.cla()
+
 
 if __name__ == '__main__':
     print_global_accuracy()

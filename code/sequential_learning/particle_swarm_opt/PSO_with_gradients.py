@@ -1,6 +1,3 @@
-import numpy as np
-import torch
-from sklearn.decomposition import PCA
 import copy
 from model import *
 
@@ -14,6 +11,7 @@ from torch import nn
 # In contrast to the paper we also let the inertia decay since otherwise the loss explodes (with given inertia).
 # At some point, however, this becomes normal SGD with many neural networks in parallel.
 
+# To run the different variants, change "decay" in the code.
 
 def reset_all_weights(model: nn.Module) -> None:
     """
@@ -87,27 +85,21 @@ def evaluate_position_single_batch(model, inputs, labels, device):
 class Particle:
 
     def __init__(self, model):
-        # maybe only save the parameters?
-
         # initialize the particle randomly
         self.model = copy.deepcopy(model)
         reset_all_weights(self.model)
 
-        # self.velocity = copy.deepcopy(model)
-        # reset_all_weights(self.velocity)
-
-        # initialize parameters as zero
+        # initialize parameters with zeros
         self.velocity = copy.deepcopy(model)
         for param in self.velocity.parameters():
             param.data = torch.zeros_like(param.data)
-            # or use param.data.fill_(0)
 
         self.best_model = copy.deepcopy(self.model)
 
         self.best_loss = float('inf')  # Change to the best accuracy/fitness?
 
 
-class PSO_BP_CD:
+class PSOWithGradients:
     def __init__(self,
                  model,
                  num_particles: int,
@@ -140,31 +132,12 @@ class PSO_BP_CD:
 
     def optimize(self, visualize=False, evaluate=True):
 
-        # print("initial evaluation")
-        # with torch.no_grad():
-        #    for particle_index, particle in enumerate(self.particles):
-        #        particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)
-        #        print("particle,loss,accuracy = ",
-        #              (particle_index + 1, round(particle_loss, 3), round(particle_accuracy, 5)))
-
-        # num_weights = sum(p.numel() for p in self.particles[0].model.parameters())
-
         global_best_loss = float('inf')
         global_best_accuracy = 0.0
         global_best_model = copy.deepcopy(self.particles[0].model).to(self.device)  # Init as the first model
 
         particle_loss_list = torch.zeros(len(self.particles), self.max_iterations)
         particle_accuracy_list = torch.zeros(len(self.particles), self.max_iterations)
-
-        # https://stackoverflow.com/questions/47714643/pytorch-data-loader-multiple-iterations
-        # code snippet to repeat the train loader
-        # train_generator = iter(self.train_loader)
-        # for i in range(1000):
-        #    try:
-        #        x, y = next(train_generator)
-        #    except StopIteration:
-        #        train_generator = iter(self.train_loader)
-        #        x, y = next(train_generator)
 
         train_generator = iter(self.train_loader)
 
@@ -174,10 +147,20 @@ class PSO_BP_CD:
         for iteration in range(self.max_iterations):
 
             # decay coefficient for social and cognitive components from PSO-PINN
-            decay = torch.tensor((1 - 1 / self.max_iterations) ** iteration).to(self.device)
+            # decay = torch.tensor((1 - 1 / self.max_iterations) ** iteration).to(self.device)
 
             # alternative 1/n for faster and larger decay. This goes to 0 instead of 1/e.
             # decay = torch.tensor(1 / (iteration + 1)).to(self.device)
+
+            # decay with 1/ (1 + log(n+1)) for n = 1 ...
+            #decay = 1 / (1 + torch.log(torch.tensor(iteration + 1)))
+
+            # subtract the last value so the decay goes down to zero
+            #decay = 1 / (1 + torch.log(torch.tensor(iteration + 1))) - \
+            #        1 / (1 + torch.log(torch.tensor(self.max_iterations)))
+
+            # velocity only contains inertia and the gradient
+            decay = 0
 
             # Use training batches for fitness evaluation and for gradient computation.
             try:
@@ -193,16 +176,11 @@ class PSO_BP_CD:
                 particle.best_model = particle.best_model.to(self.device)
                 particle.velocity = particle.velocity.to(self.device)
 
-                # calculate gradient with respect to training batch
-                # in "https://github.com/caio-davi/PSO-PINN/blob/main/src/swarm/optimizers/fss.py"
-                # the fitness function returns gradients i.e. the whole (training) dataset is used
-                # We use a training batch to calculate the gradient
-
                 outputs = particle.model(train_inputs)
                 loss_fn = torch.nn.CrossEntropyLoss()
                 particle.model.zero_grad()
                 loss = loss_fn(outputs, train_labels)
-                loss.backward()  # gradients are in param_current.grad for param in particle.model.parameters()
+                loss.backward()
 
                 with torch.no_grad():
                     # Update particle velocity and position. The methods with '_' are in place operations.
@@ -219,7 +197,6 @@ class PSO_BP_CD:
                                    social_component + \
                                    cognitive_component \
                                    - param_current.grad * self.learning_rate
-                        # The velocity is also decaying here unlike in the paper.
 
                         param_current.add_(velocity)
 

@@ -1,13 +1,17 @@
+# TODO overestimation vermeiden, hilft das?
+# TODO 1/n und 1/logn weight decay ausprobieren
+
 import torch
 import torchvision
 
 from dataloader import get_dataloaders_cifar10
-from model import NeuralNetwork, PSOPINNNet
-from PSO_BP_CD import PSO_BP_CD
+from model import NeuralNetwork
+from PSO_with_gradients import PSOWithGradients
 
 
-# This optimizer does changes to PSO-BP-CD. https://arxiv.org/pdf/2202.01943.pdf
-
+# This model is from PSO-PINN. https://arxiv.org/pdf/2202.01943.pdf
+# The gradient is used as another velocity component and the social and cognitivce coefficients
+# decay with 1/n where n is the number of iterations.
 
 def evaluate_model(model, test_data_loader):
     #  Compute Loss
@@ -93,40 +97,10 @@ if __name__ == '__main__':
         image_shape = images.shape
         break
 
-    # A small sanity check disabling all PSO and only leaving the Gradients on one particle.
-
-    # model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes).to(device)
-    # pso = PSOWithGradients(model=model, num_particles=1, inertia_weight=0.0,
-    #                       social_weight=0.0, cognitive_weight=0.0, max_iterations=1000, train_loader=train_loader,
-    #                       valid_loader=valid_loader, learning_rate=0.01, device=device)
-
-    # This one trains rather well. We do not use a learning rate scheduler here and only get slightly lower performance
-    # than SGD with a LR-Scheduler.
-    # Reference: # Epoch: 005/040 with batchsize 175 | Train: 0.54 | Validation: 0.50, using SGD with LR-Scheduler
-    # Here:  final test accuracy:  0.41749998927116394
-
-    # Hyperparameters from PSO-PINN on first experiment:
-    # num_particles = 50 , inertia_weight = 0.9, social_weight=0.5, cognitive_weight=0.08, learning_rate = 0.005
-    # This one fails to train. Using inertia decay as well makes this approach more viable.
-
-    # Hyperparameters frmo PSO-PINN for hard problems:
-    # num_particles = 50 , inertia_weight = 0.99, social_weight=0.5, cognitive_weight=0.08, learning_rate = 0.005
-    # This configuration also fails to train. Using inertia decay as well makes this approach more viable.
-
-    # model = PSOPINNNet(image_shape[1] * image_shape[2] * image_shape[3], num_classes).to(device)
-    # pso = PSOWithGradients(model=model, num_particles=50, inertia_weight=0.99,
-    #                       social_weight=0.5, cognitive_weight=0.08, max_iterations=1000, train_loader=train_loader,
-    #                       valid_loader=valid_loader, learning_rate=0.005, device=device)
-
-    # Trying the PSO-PINN configuration with a larger net. Instead of 50 particles we use 20.
-    # This configuration is rather weird. The losses all get way too high with inertia 0.99 using the standard PSO_BP_CD
-    # To overcome this problem we also let the inertia decay.
-    # We could also instead adapt the initial velocity but the paper did not mention how it was chosen.
-
     model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)  # keep in cpu
-    pso = PSO_BP_CD(model=model, num_particles=20, inertia_weight=0.99,
+    pso = PSOWithGradients(model=model, num_particles=20, inertia_weight=0.9,
                            social_weight=0.5, cognitive_weight=0.08, max_iterations=1000, train_loader=train_loader,
-                           valid_loader=valid_loader, learning_rate=0.005, device=device)
+                           valid_loader=valid_loader, learning_rate=0.01, device=device)
 
     trained_models = pso.optimize(evaluate=True)
 
