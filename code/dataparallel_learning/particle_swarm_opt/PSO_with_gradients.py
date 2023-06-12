@@ -149,11 +149,11 @@ class PSOWithGradients:
             #decay = 1 / (1 + torch.log(torch.tensor(iteration + 1)))
 
             # subtract the last value so the decay goes down to zero
-            #decay = 1 / (1 + torch.log(torch.tensor(iteration + 1))) - \
-            #        1 / (1 + torch.log(torch.tensor(self.max_iterations)))
+            decay = 1 / (1 + torch.log(torch.tensor(iteration + 1))) - \
+                    1 / (1 + torch.log(torch.tensor(self.max_iterations)))
 
             # velocity only contains inertia and the gradient
-            decay = 0
+            # = 0
 
             # Use training batches for fitness evaluation and for gradient computation.
             try:
