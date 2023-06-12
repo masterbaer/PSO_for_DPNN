@@ -9,7 +9,7 @@ To run the script on the server:
 - Navigate to the folder with the .sh files.
 - Create a virtual environment with "python -m venv venv".
 - Upgrade pip twice "pip install --upgrade pip" "pip install --upgrade pip"
-- Install some python packages: "pip install numpy torch torchvision torch-pso matplotlib scikit-learn"
+- Install some python packages: "pip install numpy torch torchvision torch-pso matplotlib scikit-learn mpi4py"
 - Close the virtual environment again "deactivate".
 
 Now you can run the scripts with e.g. "sbatch submit_alexnet_sequetial.sh".
