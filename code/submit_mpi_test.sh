@@ -11,10 +11,10 @@
 #SBATCH --mail-user=zx9254@partner.kit.edu
 
 # Set up modules.
-module purge                          # Unload all currently loaded modules.
-module load compiler/gnu/10.2
-module load mpi/openmpi/4.1   	      # Load all required modules.
-module load devel/python/3.8.6_gnu_10.2
+module purge
+module load compiler/gnu/11.2
+module load mpi/openmpi/4.1
+module load devel/cuda/10.2
 
 source venv/bin/activate      # Activate your virtual environment.
 
