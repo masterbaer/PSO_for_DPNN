@@ -37,12 +37,6 @@ def get_dataloaders_cifar10_distributed(batch_size,
         transform=test_transforms
     )
 
-    # Load test data.
-    test_dataset = torchvision.datasets.CIFAR10(
-        root=root,
-        train=False,
-        transform=test_transforms
-    )
 
     # Perform index-based train-validation split of original training data.
     total = len(train_dataset)  # Get overall number of samples in original training data.
