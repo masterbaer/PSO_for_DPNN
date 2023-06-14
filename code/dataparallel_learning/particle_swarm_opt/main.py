@@ -6,6 +6,7 @@ from dataloader import set_all_seeds, get_dataloaders_cifar10_distributed
 from PSO_parallel import PSO_parallel
 from model import NeuralNetwork
 
+
 def evaluate_model(model, test_data_loader):
     #  Compute Loss
     loss_fn = torch.nn.CrossEntropyLoss()
@@ -27,6 +28,7 @@ def evaluate_model(model, test_data_loader):
     accuracy = (correct_pred.float() / num_examples).item()
     return loss_per_batch, accuracy
 
+
 if __name__ == '__main__':
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
@@ -41,7 +43,9 @@ if __name__ == '__main__':
 
     # Get device used for training, e.g., check via torch.cuda.is_available().
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')  # Set device.
-    print(f'Using {device} device.')
+
+    if rank == 0:
+        print(f'Using {device} device.')
 
     train_transforms = torchvision.transforms.Compose([
         torchvision.transforms.Resize((70, 70)),
@@ -64,7 +68,9 @@ if __name__ == '__main__':
         validation_fraction=0.1,
         num_workers=0,
         train_transforms=train_transforms,
-        test_transforms=test_transforms
+        test_transforms=test_transforms,
+        rank=rank,
+        world_size=world_size
     )
 
     test_loader = None
