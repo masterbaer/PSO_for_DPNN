@@ -78,7 +78,8 @@ if __name__ == '__main__':
         test_dataset = torchvision.datasets.CIFAR10(
             root="data",
             train=False,
-            transform=test_transforms
+            transform=test_transforms,
+            download=True
         )
 
         test_loader = torch.utils.data.DataLoader(
