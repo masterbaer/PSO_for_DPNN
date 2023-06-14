@@ -206,7 +206,8 @@ class PSO_parallel:
                     found_better_gbest = True
 
                 # check if the best current rank has in improvement
-                min_value, min_rank = self.comm.allreduce(global_best_loss, op=MPI.MINLOC)
+                # using MPI_MINLOC requires a 2-tuple. See https://groups.google.com/g/mpi4py/c/XnOEknuSzbs.
+                min_value, min_rank = self.comm.allreduce((global_best_loss, self.rank), op=MPI.MINLOC)
                 found_better_gbest = self.comm.bcast(found_better_gbest, root=min_rank)
 
                 if found_better_gbest:
