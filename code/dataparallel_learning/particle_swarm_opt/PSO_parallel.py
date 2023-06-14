@@ -3,9 +3,6 @@ from model import *
 from mpi4py import MPI
 from torch import nn
 
-
-# TODO parallelize
-
 def reset_all_weights(model: nn.Module) -> None:
     """
     copied from: https://discuss.pytorch.org/t/how-to-re-set-alll-parameters-in-a-network/20819/11
