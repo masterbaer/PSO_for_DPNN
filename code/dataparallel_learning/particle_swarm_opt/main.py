@@ -76,7 +76,7 @@ if __name__ == '__main__':
     test_loader = None
     if rank == 0:
         test_dataset = torchvision.datasets.CIFAR10(
-            root="data",
+            root='../../data',
             train=False,
             transform=test_transforms,
             download=True
