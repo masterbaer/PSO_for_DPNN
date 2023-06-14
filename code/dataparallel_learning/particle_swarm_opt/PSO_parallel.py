@@ -1,10 +1,10 @@
 import copy
 from model import *
-
+from mpi4py import MPI
 from torch import nn
 
 
-#TODO parallelize
+# TODO parallelize
 
 def reset_all_weights(model: nn.Module) -> None:
     """
@@ -30,7 +30,7 @@ def reset_all_weights(model: nn.Module) -> None:
 # The particle evaluation is similar to the validation process.
 # see "Per-Epoch Activity" https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
 def evaluate_position(model, data_loader, device):
-    #  Compute Loss
+    #  Compute Loss locally
     loss_fn = torch.nn.CrossEntropyLoss()
     valid_loss = 0.0
     number_of_batches = len(data_loader)
@@ -56,7 +56,7 @@ def evaluate_position(model, data_loader, device):
 
 
 def evaluate_position_single_batch(model, inputs, labels, device):
-    #  Compute Loss
+    #  Compute Loss locally for a single batch
     model = model.to(device)
     inputs = inputs.to(device)
     labels = labels.to(device)
@@ -87,15 +87,15 @@ class Particle:
         for param in self.velocity.parameters():
             param.data = torch.zeros_like(param.data)
 
-        self.best_model = copy.deepcopy(self.model)
+        self.best_model = copy.deepcopy(self.model)  # personal best model
 
-        self.best_loss = float('inf')  # Change to the best accuracy/fitness?
+        self.best_loss = float('inf')
 
 
-class PSOWithGradients:
+class PSO_parallel:
     def __init__(self,
                  model,
-                 num_particles: int,
+                 particles_per_rank: int,
                  inertia_weight: float,
                  social_weight: float,
                  cognitive_weight: float,
@@ -103,16 +103,22 @@ class PSOWithGradients:
                  learning_rate: float,
                  valid_loader,
                  train_loader,
-                 device):
+                 device,
+                 rank,
+                 world_size,
+                 comm=MPI.COMM_WORLD):
         self.device = device
+        self.comm = comm
+        self.rank = rank
+        self.world_size = world_size
 
         self.model = model
 
-        self.num_particles = num_particles
+        self.particles_per_rank = particles_per_rank
 
         self.particles = []
-        for i in range(self.num_particles):
-            self.particles.append(Particle(self.model))
+        for i in range(self.particles_per_rank):
+            self.particles.append(Particle(self.model))  # each rank contains multiple particles
 
         self.inertia_weight = torch.tensor(inertia_weight).to(self.device)
         self.social_weight = torch.tensor(social_weight).to(self.device)
@@ -120,17 +126,22 @@ class PSOWithGradients:
 
         self.learning_rate = torch.tensor(learning_rate).to(self.device)
         self.max_iterations = max_iterations
-        self.valid_loader = valid_loader
+        self.valid_loader = valid_loader  # for evaluation of fitness
         self.train_loader = train_loader  # for gradient calculation
 
-    def optimize(self, visualize=False, evaluate=True):
+    def optimize(self, evaluate=True):
 
         global_best_loss = float('inf')
         global_best_accuracy = 0.0
+
         global_best_model = copy.deepcopy(self.particles[0].model).to(self.device)  # Init as the first model
 
-        particle_loss_list = torch.zeros(len(self.particles), self.max_iterations)
-        particle_accuracy_list = torch.zeros(len(self.particles), self.max_iterations)
+        # the losses and accuracies
+        global_loss_list = None
+        global_accuracy_list = None
+        if self.rank == 0:
+            global_loss_list = torch.zeros(self.max_iterations)
+            global_accuracy_list = torch.zeros(self.max_iterations)
 
         train_generator = iter(self.train_loader)
 
@@ -139,21 +150,8 @@ class PSOWithGradients:
         #  Training Loop
         for iteration in range(self.max_iterations):
 
-            # decay coefficient for social and cognitive components from PSO-PINN
-            # decay = torch.tensor((1 - 1 / self.max_iterations) ** iteration).to(self.device)
-
-            # alternative 1/n for faster and larger decay. This goes to 0 instead of 1/e.
-            # decay = torch.tensor(1 / (iteration + 1)).to(self.device)
-
-            # decay with 1/ (1 + log(n+1)) for n = 1 ...
-            #decay = 1 / (1 + torch.log(torch.tensor(iteration + 1)))
-
-            # subtract the last value so the decay goes down to zero
             decay = 1 / (1 + torch.log(torch.tensor(iteration + 1))) - \
                     1 / (1 + torch.log(torch.tensor(self.max_iterations)))
-
-            # velocity only contains inertia and the gradient
-            # = 0
 
             # Use training batches for fitness evaluation and for gradient computation.
             try:
@@ -198,40 +196,50 @@ class PSOWithGradients:
                 particle_loss, particle_accuracy = evaluate_position_single_batch(
                     particle.model, train_inputs, train_labels, self.device)
 
-                if evaluate:
-                    particle_loss_list[particle_index, iteration] = particle_loss
-                    particle_accuracy_list[particle_index, iteration] = particle_accuracy
-
-                if iteration % 20 == 0:
-                    print(f"(particle,loss,accuracy) = "
-                          f"{(particle_index + 1, round(particle_loss, 3), round(particle_accuracy, 3))}")
-
                 # Update particle's best position and fitness
                 if particle_loss < particle.best_loss:
                     particle.best_loss = particle_loss
                     particle.best_model = copy.deepcopy(particle.model)
 
-                # Update global best position and fitness
+                # We need to broadcast the information that a better model was found.
+                found_better_gbest = False
+
                 if particle_loss < global_best_loss:
                     global_best_loss = particle_loss
-                    global_best_model = copy.deepcopy(particle.model)
+                    found_better_gbest = True
 
-                if particle_accuracy > global_best_accuracy:
-                    global_best_accuracy = particle_accuracy
+                # check if the best current rank has in improvement
+                min_value, min_rank = self.comm.allreduce(global_best_loss, op=MPI.MINLOC)
+                found_better_gbest = self.comm.bcast(found_better_gbest, root=min_rank)
+
+                if found_better_gbest:
+                    global_best_loss = self.comm.bcast(min_value, root=min_rank)
+                    global_best_accuracy = self.comm.bcast(particle_accuracy, root=min_rank)
+                    # everyone shall have the updated global best model
+                    global_best_model_dict = self.comm.bcast(particle.model.state_dict(), root=min_rank)
+                    global_best_model.load_state_dict(global_best_model_dict)
+
+                    # global_best_model = copy.deepcopy(particle.model)
 
                 particle.model = particle.model.to("cpu")
                 particle.best_model = particle.best_model.to("cpu")
                 particle.velocity = particle.velocity.to("cpu")
 
-            if iteration % 20 == 0:
+            if iteration % 20 == 0 and self.rank == 0:
                 print(f"Iteration {iteration + 1}/{self.max_iterations}, Best Loss: {global_best_loss}")
 
-        if evaluate:
-            torch.save(particle_loss_list, "particle_loss_list.pt")
-            torch.save(particle_accuracy_list, "particle_accuracy_list.pt")
+            # save the best loss and accuracy of all combined particles in each iteration
+            if evaluate and self.rank == 0:
+                global_loss_list[iteration] = global_best_loss
+                global_accuracy_list[iteration] = global_best_accuracy
 
-        # overwrite the initial models parameters
-        self.model.load_state_dict(global_best_model.state_dict())
+        if evaluate and self.rank == 0:
+            torch.save(global_loss_list, "global_loss_list.pt")
+            torch.save(global_accuracy_list, "global_accuracy_list.pt")
+
+        # overwrite the initial models parameters on root
+        if self.rank == 0:
+            self.model.load_state_dict(global_best_model.state_dict())
 
         # give back particles to use as an ensemble
         return [particle.model for particle in self.particles]
