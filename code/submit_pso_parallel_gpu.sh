@@ -17,6 +17,10 @@ module load compiler/gnu/11.2
 module load mpi/openmpi/4.1
 module load devel/cuda/10.2
 
+export IBV_FORK_SAFE=1
+export OMPI_MCA_mpi_warn_on_fork=0
+export OMPI_MCA_btl_openib_warn_default_gid_prefix=0
+
 source venv/bin/activate      # Activate your virtual environment.
 
 srun python -u dataparallel_learning/particle_swarm_opt/main.py
