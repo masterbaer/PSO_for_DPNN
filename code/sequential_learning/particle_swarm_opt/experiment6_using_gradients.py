@@ -1,5 +1,4 @@
 # TODO overestimation vermeiden, hilft das?
-# TODO 1/n und 1/logn weight decay ausprobieren
 
 import torch
 import torchvision
@@ -7,60 +6,11 @@ import torchvision
 from dataloader import get_dataloaders_cifar10
 from model import NeuralNetwork
 from PSO_with_gradients import PSOWithGradients
-
+from helperfunctions import evaluate_model, evaluate_ensemble
 
 # This model is from PSO-PINN. https://arxiv.org/pdf/2202.01943.pdf
 # The gradient is used as another velocity component and the social and cognitivce coefficients
 # decay with 1/n where n is the number of iterations.
-
-def evaluate_model(model, test_data_loader):
-    #  Compute Loss
-    loss_fn = torch.nn.CrossEntropyLoss()
-    test_loss = 0.0
-    number_of_batches = len(test_data_loader)
-    correct_pred, num_examples = 0, 0
-
-    for i, (vinputs, vlabels) in enumerate(test_data_loader):  # Loop over batches in data.
-        vinputs = vinputs.to(device)
-        vlabels = vlabels.to(device)
-        predictions = model(vinputs)  # Calculate model output.
-        _, predicted = torch.max(predictions, dim=1)  # Determine class with max. probability for each sample.
-        num_examples += vlabels.size(0)  # Update overall number of considered samples.
-        correct_pred += (predicted == vlabels).sum()  # Update overall number of correct predictions.
-        loss = loss_fn(predictions, vlabels)
-        test_loss = test_loss + loss.item()
-
-    loss_per_batch = test_loss / number_of_batches
-    accuracy = (correct_pred.float() / num_examples).item()
-    return loss_per_batch, accuracy
-
-
-def evaluate_ensemble(models, test_data_loader):
-    #  Compute Loss
-    correct_pred, num_examples = 0, 0
-
-    for i, (inputs, labels) in enumerate(test_data_loader):  # Loop over batches in data.
-        inputs = inputs.to(device)
-        labels = labels.to(device)
-
-        predictions = []  # shape (particles, batchsize, classes)
-        for model in models:
-            model.to(device)
-            model.eval()  # Set the model to evaluation mode
-            with torch.no_grad():
-                output = model(inputs)
-            predictions.append(output)
-            model.to("cpu")
-        aggregated_predictions = torch.stack(predictions).mean(dim=0)  # (calc mean --> shape (batchsize,classes) )
-
-        _, predicted = torch.max(aggregated_predictions,
-                                 dim=1)  # Determine class with max. probability for each sample.
-        num_examples += labels.size(0)  # Update overall number of considered samples.
-        correct_pred += (predicted == labels).sum()  # Update overall number of correct predictions.
-
-    accuracy = (correct_pred.float() / num_examples).item()
-    return accuracy
-
 
 if __name__ == '__main__':
 
@@ -106,9 +56,9 @@ if __name__ == '__main__':
 
     # final loss on test set
     model = model.to(device)
-    loss, accuracy = evaluate_model(model, test_loader)
+    loss, accuracy = evaluate_model(model, test_loader, device)
     print("final test loss: ", loss)
     print("final test accuracy: ", accuracy)
 
-    ensemble_accuracy = evaluate_ensemble(trained_models, test_loader)
+    ensemble_accuracy = evaluate_ensemble(trained_models, test_loader, device)
     print("final ensemble accuracy: ", ensemble_accuracy)

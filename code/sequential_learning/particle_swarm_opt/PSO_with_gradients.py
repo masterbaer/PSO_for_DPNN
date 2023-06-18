@@ -1,11 +1,12 @@
 import copy
-from model import *
+import time
 
-from torch import nn
+from model import *
+from helperfunctions import reset_all_weights, evaluate_position_single_batch
 
 
 # This optimizer is from PSO-PINN. https://arxiv.org/pdf/2202.01943.pdf
-# The gradient is used as another velocity component and the social and cognitivce coefficients
+# The gradient is used as another velocity component and the social and cognitive coefficients
 # decay with 1/n where n is the number of iterations.
 
 # In contrast to the paper we also let the inertia decay since otherwise the loss explodes (with given inertia).
@@ -13,74 +14,9 @@ from torch import nn
 
 # To run the different variants, change "decay" in the code.
 
-def reset_all_weights(model: nn.Module) -> None:
-    """
-    copied from: https://discuss.pytorch.org/t/how-to-re-set-alll-parameters-in-a-network/20819/11
-
-    refs:
-        - https://discuss.pytorch.org/t/how-to-re-set-alll-parameters-in-a-network/20819/6
-        - https://stackoverflow.com/questions/63627997/reset-parameters-of-a-neural-network-in-pytorch
-        - https://pytorch.org/docs/stable/generated/torch.nn.Module.html
-    """
-
-    @torch.no_grad()
-    def weight_reset(m: nn.Module):
-        # - check if the current module has reset_parameters & if it's callabed called it on m
-        reset_parameters = getattr(m, "reset_parameters", None)
-        if callable(reset_parameters):
-            m.reset_parameters()
-
-    # Applies fn recursively to every submodule see: https://pytorch.org/docs/stable/generated/torch.nn.Module.html
-    model.apply(fn=weight_reset)
-
 
 # The particle evaluation is similar to the validation process.
 # see "Per-Epoch Activity" https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
-def evaluate_position(model, data_loader, device):
-    #  Compute Loss
-    loss_fn = torch.nn.CrossEntropyLoss()
-    valid_loss = 0.0
-    number_of_batches = len(data_loader)
-    correct_pred, num_examples = 0, 0
-
-    for i, (vinputs, vlabels) in enumerate(data_loader):  # Loop over batches in data.
-        vinputs = vinputs.to(device)
-        vlabels = vlabels.to(device)
-        predictions = model(vinputs)  # Calculate model output.
-        _, predicted = torch.max(predictions, dim=1)  # Determine class with max. probability for each sample.
-        num_examples += vlabels.size(0)  # Update overall number of considered samples.
-        correct_pred += (predicted == vlabels).sum()  # Update overall number of correct predictions.
-        loss = loss_fn(predictions, vlabels)
-        # loss = torch.nn.functional.cross_entropy(predictions, vlabels)  # cross-entropy loss for multiclass
-
-        valid_loss = valid_loss + loss.item()
-
-        # break
-
-    loss_per_batch = valid_loss / number_of_batches
-    accuracy = (correct_pred.float() / num_examples).item()
-    return loss_per_batch, accuracy
-
-
-def evaluate_position_single_batch(model, inputs, labels, device):
-    #  Compute Loss
-    model = model.to(device)
-    inputs = inputs.to(device)
-    labels = labels.to(device)
-
-    loss_fn = torch.nn.CrossEntropyLoss()
-    number_of_samples = len(inputs)
-
-    predictions = model(inputs)  # Calculate model output.
-    _, predicted = torch.max(predictions, dim=1)  # Determine class with max. probability for each sample.
-    num_examples = labels.size(0)  # Update overall number of considered samples.
-    correct_pred = (predicted == labels).sum()  # Update overall number of correct predictions.
-    loss_total = loss_fn(predictions, labels).item()
-
-    # loss_per_sample = loss / number_of_samples
-    accuracy = (correct_pred.float() / num_examples).item()
-    return loss_total, accuracy
-
 
 class Particle:
 
@@ -130,7 +66,7 @@ class PSOWithGradients:
         self.valid_loader = valid_loader
         self.train_loader = train_loader  # for gradient calculation
 
-    def optimize(self, visualize=False, evaluate=True):
+    def optimize(self, evaluate=True):
 
         global_best_loss = float('inf')
         global_best_accuracy = 0.0
@@ -143,6 +79,7 @@ class PSOWithGradients:
 
         self.model.train()  # Set model to training mode.
 
+        start_time = time.perf_counter()
         #  Training Loop
         for iteration in range(self.max_iterations):
 
@@ -156,11 +93,11 @@ class PSOWithGradients:
             #decay = 1 / (1 + torch.log(torch.tensor(iteration + 1)))
 
             # subtract the last value so the decay goes down to zero
-            #decay = 1 / (1 + torch.log(torch.tensor(iteration + 1))) - \
-            #        1 / (1 + torch.log(torch.tensor(self.max_iterations)))
+            decay = 1 / (1 + torch.log(torch.tensor(iteration + 1))) - \
+                    1 / (1 + torch.log(torch.tensor(self.max_iterations)))
 
             # velocity only contains inertia and the gradient
-            decay = 0
+            #decay = 0
 
             # Use training batches for fitness evaluation and for gradient computation.
             try:
@@ -232,6 +169,8 @@ class PSOWithGradients:
 
             if iteration % 20 == 0:
                 print(f"Iteration {iteration + 1}/{self.max_iterations}, Best Loss: {global_best_loss}")
+                local_end_time = time.perf_counter()
+                print("time elapsed: ", local_end_time - start_time)
 
         if evaluate:
             torch.save(particle_loss_list, "particle_loss_list.pt")
@@ -240,5 +179,7 @@ class PSOWithGradients:
         # overwrite the initial models parameters
         self.model.load_state_dict(global_best_model.state_dict())
 
+        end_time = time.perf_counter()
+        print("total time elapsed: ", end_time-start_time)
         # give back particles to use as an ensemble
         return [particle.model for particle in self.particles]

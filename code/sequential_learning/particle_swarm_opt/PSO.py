@@ -2,8 +2,9 @@ import copy
 import time
 
 from model import *
-
+from helperfunctions import evaluate_model, evaluate_position_single_batch, reset_all_weights
 from torch import nn
+
 
 # Benchmark: Using normal SGD, 175 batches per epoch, ReduceLROnPlateau: factor=0.1, mode='max', verbose=True
 #                                                                            Loss: 2.3024 (on first training batch)
@@ -21,78 +22,6 @@ from torch import nn
 # Epoch: 020/040 | Train: 0.70 | Validation: 0.57 , Time elapsed: 15.93 min , Loss: 1.0405
 # Epoch: 031/040 | Train: 0.77 | Validation: 0.57, Time elapsed: 24.45 min , Loss: 0.7542
 # Epoch: 040/040 | Train: 0.82 | Validation: 0.57, Time elapsed: 31.52 min , Loss: 0.4544 (test accuracy 57%)
-
-def reset_all_weights(model: nn.Module) -> None:
-    """
-    copied from: https://discuss.pytorch.org/t/how-to-re-set-alll-parameters-in-a-network/20819/11
-
-    refs:
-        - https://discuss.pytorch.org/t/how-to-re-set-alll-parameters-in-a-network/20819/6
-        - https://stackoverflow.com/questions/63627997/reset-parameters-of-a-neural-network-in-pytorch
-        - https://pytorch.org/docs/stable/generated/torch.nn.Module.html
-    """
-
-    @torch.no_grad()
-    def weight_reset(m: nn.Module):
-        # - check if the current module has reset_parameters & if it's callabed called it on m
-        reset_parameters = getattr(m, "reset_parameters", None)
-        if callable(reset_parameters):
-            m.reset_parameters()
-
-    # Applies fn recursively to every submodule see: https://pytorch.org/docs/stable/generated/torch.nn.Module.html
-    model.apply(fn=weight_reset)
-
-
-# The particle evaluation is similar to the validation process.
-# see "Per-Epoch Activity" https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
-def evaluate_position(model, data_loader, device):
-    #  Compute Loss
-    model = model.to(device)
-
-    loss_fn = torch.nn.CrossEntropyLoss()
-    valid_loss = 0.0
-    number_of_batches = len(data_loader)
-    correct_pred, num_examples = 0, 0
-
-    for i, (vinputs, vlabels) in enumerate(data_loader):  # Loop over batches in data.
-        vinputs = vinputs.to(device)
-        vlabels = vlabels.to(device)
-        predictions = model(vinputs)  # Calculate model output.
-        _, predicted = torch.max(predictions, dim=1)  # Determine class with max. probability for each sample.
-        num_examples += vlabels.size(0)  # Update overall number of considered samples.
-        correct_pred += (predicted == vlabels).sum()  # Update overall number of correct predictions.
-        loss = loss_fn(predictions, vlabels)
-        # loss = torch.nn.functional.cross_entropy(predictions, vlabels)  # cross-entropy loss for multiclass
-
-        valid_loss = valid_loss + loss.item()
-
-        # The evaluation of the fitness function takes most time in PSO. Evaluation with a small size speeds up
-        # the training but reduces the generalization. For fast training, break here to use only one batch for training.
-        #break
-
-    loss_per_batch = valid_loss / number_of_batches
-    accuracy = (correct_pred.float() / num_examples).item()
-    return loss_per_batch, accuracy
-
-
-def evaluate_position_single_batch(model, inputs, labels, device):
-    #  Compute Loss
-    model = model.to(device)
-    inputs = inputs.to(device)
-    labels = labels.to(device)
-
-    loss_fn = torch.nn.CrossEntropyLoss()
-    number_of_samples = len(inputs)
-
-    predictions = model(inputs)  # Calculate model output.
-    _, predicted = torch.max(predictions, dim=1)  # Determine class with max. probability for each sample.
-    num_examples = labels.size(0)  # Update overall number of considered samples.
-    correct_pred = (predicted == labels).sum()  # Update overall number of correct predictions.
-    loss_total = loss_fn(predictions, labels).item()
-
-    #loss_per_sample = loss / number_of_samples
-    accuracy = (correct_pred.float() / num_examples).item()
-    return loss_total, accuracy
 
 class Particle:
 
@@ -147,7 +76,7 @@ class PSO:
         print("initial evaluation")
         with torch.no_grad():
             for particle_index, particle in enumerate(self.particles):
-                particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)
+                particle_loss, particle_accuracy = evaluate_model(particle.model, self.valid_loader, self.device)
                 print("particle,loss,accuracy = ",
                       (particle_index + 1, round(particle_loss, 3), round(particle_accuracy, 5)))
         # num_weights = sum(p.numel() for p in self.particles[0].model.parameters())
@@ -194,8 +123,9 @@ class PSO:
 
                 # Evaluate particle fitness using the fitness function
 
-                #particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)
-                particle_loss, particle_accuracy = evaluate_position_single_batch(particle.model, train_inputs, train_labels, self.device)
+                # particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)
+                particle_loss, particle_accuracy = evaluate_position_single_batch(particle.model, train_inputs,
+                                                                                  train_labels, self.device)
 
                 if evaluate:
                     particle_loss_list[particle_index, iteration] = particle_loss
@@ -203,7 +133,7 @@ class PSO:
 
                 if iteration % 20 == 0:
                     print(f"(particle,loss,accuracy) = "
-                        f"{(particle_index + 1, round(particle_loss, 3), round(particle_accuracy, 3))}")
+                          f"{(particle_index + 1, round(particle_loss, 3), round(particle_accuracy, 3))}")
 
                 # Update particle's best position and fitness
                 if particle_loss < particle.best_loss:
@@ -222,10 +152,8 @@ class PSO:
                 particle.best_model = particle.best_model.to("cpu")
                 particle.velocity = particle.velocity.to("cpu")
 
-
             if iteration % 20 == 0:
                 print(f"Iteration {iteration + 1}/{self.max_iterations}, Best Loss: {global_best_loss}")
-
 
         # TODO timestamp/hyperparameter/modell in Namen reintun
         if evaluate:

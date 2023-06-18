@@ -1,11 +1,17 @@
+"""
+
+Testing the social-only model in combination with gradients.
+Also, try out an additional linear inertial decay
+
+"""
+
 import torch
 import torchvision
 
-from dataloader import get_dataloaders_cifar10, get_dataloaders_cifar10_half_training_batch_size
+from dataloader import get_dataloaders_cifar10
 from model import NeuralNetwork
-from helperfunctions import evaluate_model
-# from PSO_maxmin_against_overestimation import PSO
-from PSO import PSO
+from PSO_social_only_with_gradients import PSOWithGradientsOnlySocial
+from helperfunctions import evaluate_model, evaluate_ensemble
 
 if __name__ == '__main__':
 
@@ -23,7 +29,6 @@ if __name__ == '__main__':
     ])
 
     # GET PYTORCH DATALOADERS FOR TRAINING, TESTING, AND VALIDATION DATASET.
-
     train_loader, valid_loader, test_loader = get_dataloaders_cifar10(
         batch_size=b,
         root="../../data",
@@ -44,16 +49,17 @@ if __name__ == '__main__':
         break
 
     model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)  # keep in cpu
+    pso = PSOWithGradientsOnlySocial(model=model, num_particles=20, inertia_weight=0.9,
+                           social_weight=0.5, max_iterations=1000, train_loader=train_loader,
+                           valid_loader=valid_loader, learning_rate=0.01, device=device)
 
-    pso = PSO(model=model, num_particles=20, inertia_weight=0.1,
-              social_weight=0.5, cognitive_weight=0.8, max_iterations=200, train_loader=train_loader,
-              valid_loader=valid_loader, device=device)
-    global_best_loss, global_best_accuracy = pso.optimize()
-
-    model = model.to(device)  # for evaluation use in gpu
-    loss, accuracy = evaluate_model(model, test_loader, device)
+    trained_models = pso.optimize(evaluate=True)
 
     # final loss on test set
-
+    model = model.to(device)
+    loss, accuracy = evaluate_model(model, test_loader, device)
     print("final test loss: ", loss)
     print("final test accuracy: ", accuracy)
+
+    ensemble_accuracy = evaluate_ensemble(trained_models, test_loader, device)
+    print("final ensemble accuracy: ", ensemble_accuracy)
