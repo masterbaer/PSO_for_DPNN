@@ -3,7 +3,8 @@ import torchvision
 from mpi4py import MPI
 
 from dataloader import set_all_seeds, get_dataloaders_cifar10_distributed
-from parallel_PSO_with_gradients import PSO_parallel_with_gradients
+from dataparallel_learning.particle_swarm_opt.parallel_PSO_with_gradients_and_double_batches import \
+    PSO_parallel_with_gradients_double_batches
 from model import NeuralNetwork
 
 
@@ -97,7 +98,7 @@ if __name__ == '__main__':
         break
 
     model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)  # keep in cpu
-    pso = PSO_parallel_with_gradients(model=model, particles_per_rank=5, inertia_weight=0.90,
+    pso = PSO_parallel_with_gradients_double_batches(model=model, particles_per_rank=5, inertia_weight=0.90,
                        social_weight=0.5, cognitive_weight=0.08, max_iterations=1000, train_loader=train_loader,
                        valid_loader=valid_loader, learning_rate=0.01, device=device, rank=rank, world_size=world_size,
                        comm=comm)

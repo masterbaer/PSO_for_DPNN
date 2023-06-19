@@ -22,7 +22,7 @@ class Particle:
         self.best_loss = float('inf')
 
 
-class PSO_parallel_with_gradients:
+class PSO_parallel_with_gradients_valid_batch:
     def __init__(self,
                  model,
                  particles_per_rank: int,
@@ -74,6 +74,7 @@ class PSO_parallel_with_gradients:
             global_accuracy_list = torch.zeros(self.max_iterations)
 
         train_generator = iter(self.train_loader)
+        valid_generator = iter(self.valid_loader)
 
         self.model.train()  # Set model to training mode.
 
@@ -92,6 +93,14 @@ class PSO_parallel_with_gradients:
                 train_inputs, train_labels = next(train_generator)
             train_inputs = train_inputs.to(self.device)
             train_labels = train_labels.to(self.device)
+
+            try:
+                valid_inputs, valid_labels = next(valid_generator)
+            except StopIteration:
+                valid_generator = iter(self.train_loader)
+                valid_inputs, valid_labels = next(valid_generator)
+            valid_inputs = valid_inputs.to(self.device)
+            valid_labels = valid_labels.to(self.device)
 
             for particle_index, particle in enumerate(self.particles):
                 particle.model = particle.model.to(self.device)
@@ -122,10 +131,9 @@ class PSO_parallel_with_gradients:
 
                         param_current.add_(velocity)
 
-                # Evaluate particle fitness using the fitness function
-                # particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)
+                # Evaluate using another batch (valid batch)
                 particle_loss, particle_accuracy = evaluate_position_single_batch(
-                    particle.model, train_inputs, train_labels, self.device)
+                    particle.model, valid_inputs, valid_labels, self.device)
 
                 # Update particle's best position and fitness
                 if particle_loss < particle.best_loss:
