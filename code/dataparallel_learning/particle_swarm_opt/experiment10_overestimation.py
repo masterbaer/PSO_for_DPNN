@@ -3,8 +3,7 @@ import torchvision
 from mpi4py import MPI
 
 from dataloader import set_all_seeds, get_dataloaders_cifar10_distributed
-from dataparallel_learning.particle_swarm_opt.parallel_PSO_with_gradients_and_double_batches import \
-    PSO_parallel_with_gradients_double_batches
+from parallel_PSO_with_gradients_and_double_batches import PSO_parallel_with_gradients_double_batches
 from model import NeuralNetwork
 
 
