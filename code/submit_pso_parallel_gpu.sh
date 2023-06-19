@@ -23,4 +23,4 @@ export OMPI_MCA_btl_openib_warn_default_gid_prefix=0
 
 source venv/bin/activate      # Activate your virtual environment.
 
-srun python -u dataparallel_learning/particle_swarm_opt/main.py
+srun python -u dataparallel_learning/particle_swarm_opt/experiment8_parallel_pso_with_gradients.py
