@@ -146,7 +146,7 @@ class PSO_parallel_with_gradients_double_batches:
                 particle_loss2, particle_accuracy2 = evaluate_position_single_batch(
                     particle.model, valid_inputs2, valid_labels2, self.device)
 
-                # take the worse of both as the fitness evaluation
+                # take the worse (larger) of both as the fitness evaluation
                 if particle_loss < particle_loss2:
                     particle_loss = particle_loss2
                     particle_accuracy = particle_accuracy2

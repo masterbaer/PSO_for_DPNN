@@ -37,7 +37,6 @@ if __name__ == '__main__':
 
     print("My rank is: ", rank)
 
-    seed = 0  # Set random seed.
     b = 256  # Set batch size.
     e = 200  # Set number of epochs to be trained.
 

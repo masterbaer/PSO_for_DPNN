@@ -9,6 +9,6 @@ if __name__ == '__main__':
 
     plt.plot(losses)
     plt.ylabel("losses")
-    plt.savefig("parallel_losses.png")
+    plt.savefig("parallel_losses_double_batch.png")
     #plt.show()
     plt.cla()
