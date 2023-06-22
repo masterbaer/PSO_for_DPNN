@@ -18,13 +18,18 @@ module load devel/cuda/10.2
 
 source venv/bin/activate      # Activate your virtual environment.
 
-mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 1
-mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 2
-mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 3
-mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 4
-mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 5
-mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 6
-mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 7
-mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 8
-mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 9
+#mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 1
+#mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 2
+#mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 3
+#mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 4
+#mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 5
+#mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 6
+#mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 7
+#mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 8
+#mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 9
+#mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 10
+
 mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 10
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 11
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 12
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 13
