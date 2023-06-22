@@ -1,9 +1,11 @@
+import sys
+
 import torch
 import torchvision
 from mpi4py import MPI
 
 from dataloader import set_all_seeds, get_dataloaders_cifar10_distributed
-from parallel_PSO_with_valid_batch import PSO_parallel_with_gradients_valid_batch
+from parallel_PSO_with_gradients import PSO_parallel_with_gradients
 from model import NeuralNetwork
 
 
@@ -34,10 +36,13 @@ if __name__ == '__main__':
     rank = comm.Get_rank()
     world_size = comm.Get_size()
     set_all_seeds(rank)
-
-    print("My rank is: ", rank)
-
     b = 256  # Set batch size.
+    particles_per_rank = sys.argv[1]
+    particles_per_rank = int(particles_per_rank)
+
+    if rank == 0:
+        print(f"using {particles_per_rank} particles per rank ")
+        print(f"batchsize = {b}")
 
     # Get device used for training, e.g., check via torch.cuda.is_available().
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')  # Set device.
@@ -95,12 +100,12 @@ if __name__ == '__main__':
         break
 
     model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)  # keep in cpu
-    pso = PSO_parallel_with_gradients_valid_batch(model=model, particles_per_rank=5, inertia_weight=0.90,
+    pso = PSO_parallel_with_gradients(model=model, particles_per_rank=particles_per_rank, inertia_weight=0.90,
                        social_weight=0.5, cognitive_weight=0.08, max_iterations=1000, train_loader=train_loader,
                        valid_loader=valid_loader, learning_rate=0.01, device=device, rank=rank, world_size=world_size,
                        comm=comm)
 
-    pso.optimize()
+    pso.optimize(evaluate=False)
     # trained_models = pso.optimize()
 
     if rank == 0:
