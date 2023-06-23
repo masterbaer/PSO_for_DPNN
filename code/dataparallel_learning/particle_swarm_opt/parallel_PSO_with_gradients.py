@@ -151,7 +151,10 @@ class PSO_parallel_with_gradients:
                     global_best_model_dict = self.comm.bcast(particle.model.state_dict(), root=min_rank)
                     global_best_model.load_state_dict(global_best_model_dict)
 
-                    # global_best_model = copy.deepcopy(particle.model)
+                    if self.rank == min_rank:
+                        print(f"better particle found at iteration {iteration}, current accuracy: {particle_accuracy}")
+                        print(f"new loss is {min_value}")
+
 
                 particle.model = particle.model.to("cpu")
                 particle.best_model = particle.best_model.to("cpu")
@@ -159,6 +162,7 @@ class PSO_parallel_with_gradients:
 
             if iteration % 20 == 0 and self.rank == 0:
                 print(f"Iteration {iteration + 1}/{self.max_iterations}, Best Loss: {global_best_loss}")
+
 
             # save the best loss and accuracy of all combined particles in each iteration
             if evaluate and self.rank == 0:
