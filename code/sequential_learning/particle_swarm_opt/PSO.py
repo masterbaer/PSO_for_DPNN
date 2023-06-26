@@ -72,24 +72,35 @@ class PSO:
         self.valid_loader = valid_loader
 
     def optimize(self, evaluate=True):
+        train_generator = iter(self.train_loader)
 
-        print("initial evaluation")
-        with torch.no_grad():
-            for particle_index, particle in enumerate(self.particles):
-                particle_loss, particle_accuracy = evaluate_model(particle.model, self.valid_loader, self.device)
-                print("particle,loss,accuracy = ",
-                      (particle_index + 1, round(particle_loss, 3), round(particle_accuracy, 5)))
-        # num_weights = sum(p.numel() for p in self.particles[0].model.parameters())
+        print("find initial global best model")
+        try:
+            train_inputs, train_labels = next(train_generator)
+        except StopIteration:
+            train_generator = iter(self.train_loader)
+            train_inputs, train_labels = next(train_generator)
+        train_inputs = train_inputs.to(self.device)
+        train_labels = train_labels.to(self.device)
 
-        global_best_loss = float('inf')
+        for particle_index, particle in enumerate(self.particles):
+            particle.model.to(self.device)
+            particle_loss, particle_accuracy = evaluate_position_single_batch(particle.model, train_inputs,
+                                                                              train_labels, self.device)
+            particle.best_loss = particle_loss
+            particle.model.to("cpu")
+
+        global_best_loss = self.particles[0].best_loss
+        global_best_model = copy.deepcopy(self.particles[0].model).to(self.device)
+        for particle_index, particle in enumerate(self.particles):
+            if particle.best_loss < global_best_loss:
+                global_best_loss = particle.best_loss
+                global_best_model = copy.deepcopy(particle.model).to(self.device)
+
         global_best_accuracy = 0.0
-        global_best_model = copy.deepcopy(self.particles[0].model)  # Init as the first model
-        global_best_model = global_best_model.to(self.device)
-
         particle_loss_list = torch.zeros(len(self.particles), self.max_iterations)
         particle_accuracy_list = torch.zeros(len(self.particles), self.max_iterations)
 
-        train_generator = iter(self.train_loader)
         #  Training Loop
         for iteration in range(self.max_iterations):
             try:
@@ -155,7 +166,6 @@ class PSO:
             if iteration % 20 == 0:
                 print(f"Iteration {iteration + 1}/{self.max_iterations}, Best Loss: {global_best_loss}")
 
-        # TODO timestamp/hyperparameter/modell in Namen reintun
         if evaluate:
             torch.save(particle_loss_list, "particle_loss_list.pt")
             torch.save(particle_accuracy_list, "particle_accuracy_list.pt")

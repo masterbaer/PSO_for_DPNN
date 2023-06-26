@@ -28,6 +28,7 @@ mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalabili
 mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 8
 mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 9
 mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 10
-mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 11
-mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 12
-mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 13
+
+#mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 11
+#mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 12
+#mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_scalability.py 13

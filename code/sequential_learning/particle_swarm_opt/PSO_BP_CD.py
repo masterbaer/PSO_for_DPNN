@@ -71,19 +71,33 @@ class PSO_BP_CD:
 
     def optimize(self, evaluate=True):
 
-        # print("initial evaluation")
-        # with torch.no_grad():
-        #    for particle_index, particle in enumerate(self.particles):
-        #        particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)
-        #        print("particle,loss,accuracy = ",
-        #              (particle_index + 1, round(particle_loss, 3), round(particle_accuracy, 5)))
+        train_generator = iter(self.train_loader)
+        valid_generator = iter(self.valid_loader)
 
-        # num_weights = sum(p.numel() for p in self.particles[0].model.parameters())
+        print("find initial global best model")
+        try:
+            valid_inputs, valid_labels = next(valid_generator)
+        except StopIteration:
+            valid_generator = iter(self.valid_loader)
+            valid_inputs, valid_labels = next(valid_generator)
+        valid_inputs = valid_inputs.to(self.device)
+        valid_labels = valid_labels.to(self.device)
 
-        global_best_loss = float('inf')
+        for particle_index, particle in enumerate(self.particles):
+            particle.model.to(self.device)
+            particle_loss, particle_accuracy = evaluate_position_single_batch(particle.model, valid_inputs,
+                                                                              valid_labels, self.device)
+            particle.best_loss = particle_loss
+            particle.model.to("cpu")
+
+        global_best_loss = self.particles[0].best_loss
+        global_best_model = copy.deepcopy(self.particles[0].model).to(self.device)
+        for particle_index, particle in enumerate(self.particles):
+            if particle.best_loss < global_best_loss:
+                global_best_loss = particle.best_loss
+                global_best_model = copy.deepcopy(particle.model).to(self.device)
+
         global_best_accuracy = 0.0
-        global_best_model = copy.deepcopy(self.particles[0].model).to(self.device)  # Init as the first model
-
         particle_loss_list = torch.zeros(len(self.particles), self.max_iterations)
         particle_accuracy_list = torch.zeros(len(self.particles), self.max_iterations)
 
@@ -97,8 +111,6 @@ class PSO_BP_CD:
         #        train_generator = iter(self.train_loader)
         #        x, y = next(train_generator)
 
-        train_generator = iter(self.train_loader)
-
         self.model.train()  # Set model to training mode.
 
         #  Training Loop
@@ -111,15 +123,25 @@ class PSO_BP_CD:
             # decay = torch.tensor(1 / (iteration + 1)).to(self.device)
 
             # Use training batches for fitness evaluation and for gradient computation.
+
             try:
-                train_inputs, train_labels = next(train_generator)
+                valid_inputs, valid_labels = next(valid_generator)
             except StopIteration:
-                train_generator = iter(self.train_loader)
-                train_inputs, train_labels = next(train_generator)
-            train_inputs = train_inputs.to(self.device)
-            train_labels = train_labels.to(self.device)
+                valid_generator = iter(self.valid_loader)
+                valid_inputs, valid_labels = next(valid_generator)
+            valid_inputs = valid_inputs.to(self.device)
+            valid_labels = valid_labels.to(self.device)
 
             for particle_index, particle in enumerate(self.particles):
+
+                try:
+                    train_inputs, train_labels = next(train_generator)
+                except StopIteration:
+                    train_generator = iter(self.train_loader)
+                    train_inputs, train_labels = next(train_generator)
+                train_inputs = train_inputs.to(self.device)
+                train_labels = train_labels.to(self.device)
+
                 particle.model = particle.model.to(self.device)
                 particle.best_model = particle.best_model.to(self.device)
                 particle.velocity = particle.velocity.to(self.device)
@@ -157,7 +179,7 @@ class PSO_BP_CD:
                 # Evaluate particle fitness using the fitness function
                 # particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)
                 particle_loss, particle_accuracy = evaluate_position_single_batch(
-                    particle.model, train_inputs, train_labels, self.device)
+                    particle.model, valid_inputs, valid_labels, self.device)
 
                 if evaluate:
                     particle_loss_list[particle_index, iteration] = particle_loss

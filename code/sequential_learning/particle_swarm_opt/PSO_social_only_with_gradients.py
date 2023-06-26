@@ -141,14 +141,35 @@ class PSOWithGradientsOnlySocial:
         self.train_loader = train_loader  # for gradient calculation
 
     def optimize(self, visualize=False, evaluate=True):
-        global_best_loss = float('inf')
-        global_best_accuracy = 0.0
-        global_best_model = copy.deepcopy(self.particles[0].model).to(self.device)  # Init as the first model
-
-        particle_loss_list = torch.zeros(len(self.particles), self.max_iterations)
-        particle_accuracy_list = torch.zeros(len(self.particles), self.max_iterations)
 
         train_generator = iter(self.train_loader)
+        valid_generator = iter(self.valid_loader)
+
+        print("find initial global best model")
+        try:
+            valid_inputs, valid_labels = next(valid_generator)
+        except StopIteration:
+            valid_generator = iter(self.valid_loader)
+            valid_inputs, valid_labels = next(valid_generator)
+        valid_inputs = valid_inputs.to(self.device)
+        valid_labels = valid_labels.to(self.device)
+
+        global_best_loss = float("inf")
+        global_best_model = copy.deepcopy(self.particles[0].model).to(self.device)
+
+        for particle_index, particle in enumerate(self.particles):
+            particle.model.to(self.device)
+            particle_loss, particle_accuracy = evaluate_position_single_batch(particle.model, valid_inputs,
+                                                                              valid_labels, self.device)
+            if particle_loss < global_best_loss:
+                global_best_loss = particle_loss
+                global_best_model = copy.deepcopy(particle.model).to(self.device)
+
+            particle.model.to("cpu")
+
+        global_best_accuracy = 0.0
+        particle_loss_list = torch.zeros(len(self.particles), self.max_iterations)
+        particle_accuracy_list = torch.zeros(len(self.particles), self.max_iterations)
 
         self.model.train()  # Set model to training mode.
 
@@ -156,21 +177,31 @@ class PSOWithGradientsOnlySocial:
         #  Training Loop
         for iteration in range(self.max_iterations):
 
+            try:
+                valid_inputs, valid_labels = next(valid_generator)
+            except StopIteration:
+                valid_generator = iter(self.valid_loader)
+                valid_inputs, valid_labels = next(valid_generator)
+            valid_inputs = valid_inputs.to(self.device)
+            valid_labels = valid_labels.to(self.device)
+
             decay = 1
 
             #decay = 1 / (1 + torch.log(torch.tensor(iteration + 1))) - \
             #        1 / (1 + torch.log(torch.tensor(self.max_iterations)))
 
             # Use training batches for fitness evaluation and for gradient computation.
-            try:
-                train_inputs, train_labels = next(train_generator)
-            except StopIteration:
-                train_generator = iter(self.train_loader)
-                train_inputs, train_labels = next(train_generator)
-            train_inputs = train_inputs.to(self.device)
-            train_labels = train_labels.to(self.device)
+
 
             for particle_index, particle in enumerate(self.particles):
+                try:
+                    train_inputs, train_labels = next(train_generator)
+                except StopIteration:
+                    train_generator = iter(self.train_loader)
+                    train_inputs, train_labels = next(train_generator)
+                train_inputs = train_inputs.to(self.device)
+                train_labels = train_labels.to(self.device)
+
                 particle.model = particle.model.to(self.device)
                 particle.velocity = particle.velocity.to(self.device)
 
@@ -196,7 +227,7 @@ class PSOWithGradientsOnlySocial:
                 # Evaluate particle fitness using the fitness function
                 # particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)
                 particle_loss, particle_accuracy = evaluate_position_single_batch(
-                    particle.model, train_inputs, train_labels, self.device)
+                    particle.model, valid_inputs, valid_labels, self.device)
 
                 if evaluate:
                     particle_loss_list[particle_index, iteration] = particle_loss
