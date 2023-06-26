@@ -5,6 +5,7 @@ from model import *
 from mpi4py import MPI
 from helperfunctions import evaluate_position_single_batch, reset_all_weights
 
+
 class Particle:
 
     def __init__(self, model):
@@ -61,10 +62,39 @@ class PSO_parallel_with_gradients:
 
     def optimize(self, evaluate=True):
 
-        global_best_loss = float('inf')
-        global_best_accuracy = 0.0
+        train_generator = iter(self.train_loader)
+        valid_generator = iter(self.valid_loader)
 
-        global_best_model = copy.deepcopy(self.particles[0].model).to(self.device)  # Init as the first model
+        # find initial global best model
+        try:
+            valid_inputs, valid_labels = next(valid_generator)
+        except StopIteration:
+            valid_generator = iter(self.valid_loader)
+            valid_inputs, valid_labels = next(valid_generator)
+        valid_inputs = valid_inputs.to(self.device)
+        valid_labels = valid_labels.to(self.device)
+
+        for particle_index, particle in enumerate(self.particles):
+            particle.model.to(self.device)
+            particle_loss, particle_accuracy = evaluate_position_single_batch(particle.model, valid_inputs,
+                                                                              valid_labels, self.device)
+            particle.best_loss = particle_loss
+            particle.model.to("cpu")
+
+        global_best_loss = self.particles[0].best_loss
+        global_best_model = copy.deepcopy(self.particles[0].model).to(self.device)
+        for particle_index, particle in enumerate(self.particles):
+            if particle.best_loss < global_best_loss:
+                global_best_loss = particle.best_loss
+                global_best_model = copy.deepcopy(particle.model).to(self.device)
+
+        # synchronize global best model across all ranks
+        min_value, min_rank = self.comm.allreduce((global_best_loss, self.rank), op=MPI.MINLOC)
+        global_best_loss = self.comm.bcast(min_value, root=min_rank)
+        global_best_model_dict = self.comm.bcast(global_best_model.state_dict(), root=min_rank)
+        global_best_model.load_state_dict(global_best_model_dict)
+
+        global_best_accuracy = 0.0
 
         # the losses and accuracies
         global_loss_list = None
@@ -73,27 +103,36 @@ class PSO_parallel_with_gradients:
             global_loss_list = torch.zeros(self.max_iterations)
             global_accuracy_list = torch.zeros(self.max_iterations)
 
-        train_generator = iter(self.train_loader)
-
         self.model.train()  # Set model to training mode.
 
         start_time = time.perf_counter()
 
         #  Training Loop
         for iteration in range(self.max_iterations):
+
+            try:
+                valid_inputs, valid_labels = next(valid_generator)
+            except StopIteration:
+                valid_generator = iter(self.valid_loader)
+                valid_inputs, valid_labels = next(valid_generator)
+            valid_inputs = valid_inputs.to(self.device)
+            valid_labels = valid_labels.to(self.device)
+
             decay = 1 / (1 + torch.log(torch.tensor(iteration + 1))) - \
                     1 / (1 + torch.log(torch.tensor(self.max_iterations)))
 
             # Use training batches for fitness evaluation and for gradient computation.
-            try:
-                train_inputs, train_labels = next(train_generator)
-            except StopIteration:
-                train_generator = iter(self.train_loader)
-                train_inputs, train_labels = next(train_generator)
-            train_inputs = train_inputs.to(self.device)
-            train_labels = train_labels.to(self.device)
 
             for particle_index, particle in enumerate(self.particles):
+
+                try:
+                    train_inputs, train_labels = next(train_generator)
+                except StopIteration:
+                    train_generator = iter(self.train_loader)
+                    train_inputs, train_labels = next(train_generator)
+                train_inputs = train_inputs.to(self.device)
+                train_labels = train_labels.to(self.device)
+
                 particle.model = particle.model.to(self.device)
                 particle.best_model = particle.best_model.to(self.device)
                 particle.velocity = particle.velocity.to(self.device)
@@ -125,7 +164,7 @@ class PSO_parallel_with_gradients:
                 # Evaluate particle fitness using the fitness function
                 # particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)
                 particle_loss, particle_accuracy = evaluate_position_single_batch(
-                    particle.model, train_inputs, train_labels, self.device)
+                    particle.model, valid_inputs, valid_labels, self.device)
 
                 # Update particle's best position and fitness
                 if particle_loss < particle.best_loss:
@@ -155,14 +194,12 @@ class PSO_parallel_with_gradients:
                         print(f"better particle found at iteration {iteration}, current accuracy: {particle_accuracy}")
                         print(f"new loss is {min_value}")
 
-
                 particle.model = particle.model.to("cpu")
                 particle.best_model = particle.best_model.to("cpu")
                 particle.velocity = particle.velocity.to("cpu")
 
             if iteration % 20 == 0 and self.rank == 0:
                 print(f"Iteration {iteration + 1}/{self.max_iterations}, Best Loss: {global_best_loss}")
-
 
             # save the best loss and accuracy of all combined particles in each iteration
             if evaluate and self.rank == 0:

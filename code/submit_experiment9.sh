@@ -18,4 +18,4 @@ module load devel/cuda/10.2
 
 source venv/bin/activate      # Activate your virtual environment.
 
-mpirun python -u dataparallel_learning/particle_swarm_opt/experiment9_validation_batch.py
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment9_overestimation.py
