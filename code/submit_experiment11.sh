@@ -18,5 +18,5 @@ module load devel/cuda/10.2
 
 source venv/bin/activate      # Activate your virtual environment.
 
-mpirun python -u dataparallel_learning/particle_swarm_opt/experiment8_parallel_pso_with_gradients.py
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment11_pso_pinn_large.py
 
