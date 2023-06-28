@@ -94,8 +94,8 @@ class PSO:
         self.max_iterations = max_iterations
         self.train_loader = train_loader
 
-
-    def optimize(self, visualize=False, evaluate=True):
+    def optimize(self, visualize=False, evaluate=True,
+                 output1="particle_loss_list.pt", output2="particle_accuracy_list.pt", output3="pca_weights.pt"):
         num_weights = sum(p.numel() for p in self.model.parameters())
         particles = [Particle(num_weights, self.min_param_value, self.max_param_value, self.device) for _ in
                      range(self.num_particles)]
@@ -141,7 +141,7 @@ class PSO:
                     particle_loss_list[particle_index, iteration] = particle_loss
                     particle_accuracy_list[particle_index, iteration] = particle_accuracy
 
-                #if iteration % 20 == 0:
+                # if iteration % 20 == 0:
                 #    print(f"(particle,loss,accuracy) = "
                 #          f"{(particle_index + 1, round(particle_loss, 3), round(particle_accuracy.item(), 3))}")
 
@@ -168,13 +168,12 @@ class PSO:
 
                 particles_transformed[iteration] = pca.transform(particles_np)
 
-        # TODO timestamp/hyperparameter/modell in Namen reintun
         if evaluate:
-            torch.save(particle_loss_list, "particle_loss_list.pt")
-            torch.save(particle_accuracy_list, "particle_accuracy_list.pt")
+            torch.save(particle_loss_list, output1)
+            torch.save(particle_accuracy_list, output2)
 
         if visualize:
-            torch.save(particles_transformed, "pca_weights.pt")
+            torch.save(particles_transformed, output3)
 
         set_weights(self.model, global_best_position)
         # the global best accuracy does not have to match to the best loss here

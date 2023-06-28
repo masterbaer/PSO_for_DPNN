@@ -69,7 +69,7 @@ class PSO_BP_CD:
         self.valid_loader = valid_loader
         self.train_loader = train_loader  # for gradient calculation
 
-    def optimize(self, evaluate=True):
+    def optimize(self, evaluate=True, output1="particle_loss_list.pt", output2="particle_accuracy_list.pt"):
 
         train_generator = iter(self.train_loader)
         valid_generator = iter(self.valid_loader)
@@ -210,8 +210,8 @@ class PSO_BP_CD:
                 print(f"Iteration {iteration + 1}/{self.max_iterations}, Best Loss: {global_best_loss}")
 
         if evaluate:
-            torch.save(particle_loss_list, "particle_loss_list.pt")
-            torch.save(particle_accuracy_list, "particle_accuracy_list.pt")
+            torch.save(particle_loss_list, output1)
+            torch.save(particle_accuracy_list, output2)
 
         # overwrite the initial models parameters
         self.model.load_state_dict(global_best_model.state_dict())

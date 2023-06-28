@@ -59,7 +59,7 @@ class PSO_parallel_with_gradients_double_batches:
         self.valid_loader = valid_loader  # for evaluation of fitness
         self.train_loader = train_loader  # for gradient calculation
 
-    def optimize(self, evaluate=True):
+    def optimize(self, evaluate=True, output1="global_loss_list.pt", output2="global_accuracy_list.pt"):
 
         train_generator = iter(self.train_loader)
         valid_generator = iter(self.valid_loader)
@@ -221,8 +221,8 @@ class PSO_parallel_with_gradients_double_batches:
                 print(f"time elapsed after {iteration + 1} iterations: ", end_time_local - start_time)
 
         if evaluate and self.rank == 0:
-            torch.save(global_loss_list, "global_loss_list.pt")
-            torch.save(global_accuracy_list, "global_accuracy_list.pt")
+            torch.save(global_loss_list, output1)
+            torch.save(global_accuracy_list, output2)
 
         if self.rank == 0:
             end_time = time.perf_counter()

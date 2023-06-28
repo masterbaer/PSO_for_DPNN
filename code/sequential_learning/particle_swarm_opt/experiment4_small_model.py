@@ -4,7 +4,6 @@ import torchvision
 from dataloader import get_dataloaders_cifar10, get_dataloaders_cifar10_half_training_batch_size
 from model import NeuralNetwork
 from helperfunctions import evaluate_model
-# from PSO_maxmin_against_overestimation import PSO
 from PSO import PSO
 
 if __name__ == '__main__':
@@ -48,7 +47,7 @@ if __name__ == '__main__':
     pso = PSO(model=model, num_particles=20, inertia_weight=0.1,
               social_weight=0.5, cognitive_weight=0.8, max_iterations=200, train_loader=train_loader,
               valid_loader=valid_loader, device=device)
-    global_best_loss, global_best_accuracy = pso.optimize()
+    pso.optimize(evaluate=False, output1="experiment4_loss.pt", output2="experiment4_accuracy.pt")
 
     model = model.to(device)  # for evaluation use in gpu
     loss, accuracy = evaluate_model(model, test_loader, device)

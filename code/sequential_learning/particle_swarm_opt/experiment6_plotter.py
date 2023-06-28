@@ -8,8 +8,8 @@ import numpy as np
 
 
 def get_global_accuracies():
-    losses = torch.load("particle_loss_list.pt")  # (particle,iteration)
-    accuracies = torch.load("particle_accuracy_list.pt")
+    losses = torch.load("experiment6_loss.pt")  # (particle,iteration)
+    accuracies = torch.load("experiment6_accuracy.pt")
     number_of_particles, number_of_iterations = losses.shape
 
     # get the global best loss in each iteration
@@ -51,7 +51,7 @@ def print_global_accuracy():
 
 
 def print_accuracies():
-    accuracies = torch.load('particle_accuracy_list.pt')
+    accuracies = torch.load('experiment6_accuracy.pt')
     particle_size, iterations = accuracies.shape
 
     x = list(range(1, iterations))

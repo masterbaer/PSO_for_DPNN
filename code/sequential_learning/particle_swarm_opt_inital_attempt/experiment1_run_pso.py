@@ -75,7 +75,8 @@ if __name__ == '__main__':
               max_param_value=1, max_iterations=200, train_loader=valid_loader, device=device)
     # for now just use the validation set
 
-    pso.optimize(visualize=True)
+    pso.optimize(visualize=True, output1="experiment1_loss.pt", output2="experiment1_accuracy.pt",
+                 output3="experiment1_pca.pt")
 
     # final loss on test set
     loss, accuracy = evaluate_model(model, test_loader)

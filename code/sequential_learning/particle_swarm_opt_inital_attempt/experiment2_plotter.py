@@ -7,7 +7,7 @@ import numpy as np
 
 
 def print_losses():
-    losses = torch.load('particle_loss_list.pt')
+    losses = torch.load("experiment2_loss.pt")
     particle_size, iterations = losses.shape
 
     x = list(range(1, iterations))
@@ -22,7 +22,7 @@ def print_losses():
 
 
 def get_global_losses():
-    losses = torch.load('particle_loss_list.pt')
+    losses = torch.load('experiment2_loss.pt')
     particle_size, iterations = losses.shape
 
     # print the best losses until that iteration
@@ -36,9 +36,9 @@ def get_global_losses():
 
 
 def get_global_accuracies():
-    particles = torch.load('pca_weights.pt')  # (iteration, particle, 2)
-    losses = torch.load("particle_loss_list.pt")  # (particle,iteration)
-    accuracies = torch.load("particle_accuracy_list.pt")
+    particles = torch.load('experiment2_pca.pt')  # (iteration, particle, 2)
+    losses = torch.load("experiment2_loss.pt")  # (particle,iteration)
+    accuracies = torch.load("experiment2_accuracy.pt")
     number_of_iterations, number_of_particles, number_of_pca_components = particles.shape
 
     # get the global best loss in each iteration
@@ -86,7 +86,7 @@ def print_global_accuracy():
 
 
 def print_accuracies():
-    accuracies = torch.load('particle_accuracy_list.pt')
+    accuracies = torch.load('experiment2_accuracy.pt')
     particle_size, iterations = accuracies.shape
 
     x = list(range(1, iterations))
@@ -159,9 +159,9 @@ def print_pca():
 def create_animation():
     # See https://stackoverflow.com/questions/9401658/how-to-animate-a-scatter-plot
 
-    particles = torch.load('pca_weights.pt')  # (iteration, particle, 2)
-    losses = torch.load("particle_loss_list.pt")  # (particle,iteration)
-    accuracies = torch.load("particle_accuracy_list.pt")
+    particles = torch.load('experiment2_pca.pt')  # (iteration, particle, 2)
+    losses = torch.load("experiment2_loss.pt")  # (particle,iteration)
+    accuracies = torch.load("experiment2_accuracy.pt")
     number_of_iterations, number_of_particles, number_of_pca_components = particles.shape
 
     # get the global best loss in each iteration

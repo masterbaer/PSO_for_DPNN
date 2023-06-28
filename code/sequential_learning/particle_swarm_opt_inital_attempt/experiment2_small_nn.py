@@ -77,7 +77,10 @@ if __name__ == '__main__':
     pso = PSO(model=model, num_particles=10, inertia_weight=0.1,
               social_weight=0.5, cognitive_weight=0.8, min_param_value=-1,
               max_param_value=1, max_iterations=200, train_loader=valid_loader, device=device)
-    global_best_loss, global_best_accuracy = pso.optimize(visualize=True)
+
+    pso.optimize(visualize=True, output1="experiment2_loss.pt", output2="experiment2_accuracy.pt",
+                 output3="experiment2_pca.pt")
+
     #global_best_loss, global_best_accuracy = pso.optimize(visualize=False, evaluate=False)
     loss, accuracy = evaluate_model(model, test_loader)
 

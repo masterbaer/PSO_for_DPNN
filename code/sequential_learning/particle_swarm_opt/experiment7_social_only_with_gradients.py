@@ -53,7 +53,7 @@ if __name__ == '__main__':
                            social_weight=0.5, max_iterations=1000, train_loader=train_loader,
                            valid_loader=valid_loader, learning_rate=0.01, device=device)
 
-    trained_models = pso.optimize(evaluate=True)
+    trained_models = pso.optimize(evaluate=True, output1="experiment7_loss.pt", output2="experiment7_accuracy.pt")
 
     # final loss on test set
     model = model.to(device)
