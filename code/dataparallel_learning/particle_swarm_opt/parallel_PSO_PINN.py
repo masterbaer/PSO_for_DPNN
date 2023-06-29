@@ -189,10 +189,6 @@ class PSO_PINN:
                     global_best_model_dict = self.comm.bcast(particle.model.state_dict(), root=min_rank)
                     global_best_model.load_state_dict(global_best_model_dict)
 
-                    if self.rank == min_rank:
-                        print(f"better particle found at iteration {iteration}, current accuracy: {particle_accuracy}")
-                        print(f"new loss is {min_value}")
-
                 particle.model = particle.model.to("cpu")
                 particle.best_model = particle.best_model.to("cpu")
                 particle.velocity = particle.velocity.to("cpu")
