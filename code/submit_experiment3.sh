@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=pso_small_nn_hyperparameter
+#SBATCH --job-name=experiment3
 #SBATCH --partition=gpu_4
 #SBATCH --gres=gpu:1 # number of requested GPUs (GPU nodes shared btwn multiple jobs)
 #SBATCH --ntasks=4

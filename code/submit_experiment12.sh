@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=mpi_test        # job name
+#SBATCH --job-name=experiment12        # job name
 #SBATCH --partition=multiple            # queue for resource allocation
 #SBATCH --nodes=4                       # number of nodes to be used
 #SBATCH --time=04:00:00                   # wall-clock time limit

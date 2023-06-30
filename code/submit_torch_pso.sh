@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=alex_gpu_sequential
+#SBATCH --job-name=torch_pso_sequential
 #SBATCH --partition=gpu_4
 #SBATCH --gres=gpu:1   # number of requested GPUs (GPU nodes shared btwn multiple jobs)
 #SBATCH --time=45:00 # wall-clock time limit, adapt if necessary
