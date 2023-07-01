@@ -187,11 +187,10 @@ class PSOWithGradientsOnlySocial:
 
             decay = 1
 
-            #decay = 1 / (1 + torch.log(torch.tensor(iteration + 1))) - \
+            # decay = 1 / (1 + torch.log(torch.tensor(iteration + 1))) - \
             #        1 / (1 + torch.log(torch.tensor(self.max_iterations)))
 
             # Use training batches for fitness evaluation and for gradient computation.
-
 
             for particle_index, particle in enumerate(self.particles):
                 try:
@@ -211,18 +210,17 @@ class PSOWithGradientsOnlySocial:
                 loss = loss_fn(outputs, train_labels)
                 loss.backward()
 
-                with torch.no_grad():
-                    # Update particle velocity and position. The methods with '_' are in place operations.
-                    for i, (param_current, g_best, velocity_current) in enumerate(
-                            zip(particle.model.parameters(), global_best_model.parameters(),
-                                particle.velocity.parameters())):
-                        social_component = decay * self.social_weight * torch.rand(1).to(self.device) * (
-                                g_best.data - param_current.data)
+                # Update particle velocity and position. The methods with '_' are in place operations.
+                for i, (param_current, g_best, velocity_current) in enumerate(
+                        zip(particle.model.parameters(), global_best_model.parameters(),
+                            particle.velocity.parameters())):
+                    social_component = decay * self.social_weight * torch.rand(1).to(self.device) * (
+                            g_best.data - param_current.data)
 
-                        velocity = velocity_current * self.inertia_weight + \
-                                   social_component - param_current.grad * self.learning_rate
+                    velocity = velocity_current * self.inertia_weight + \
+                               social_component - param_current.grad * self.learning_rate
 
-                        param_current.add_(velocity)
+                    param_current.data.add_(velocity)
 
                 # Evaluate particle fitness using the fitness function
                 # particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)
@@ -260,6 +258,6 @@ class PSOWithGradientsOnlySocial:
         self.model.load_state_dict(global_best_model.state_dict())
 
         end_time = time.perf_counter()
-        print("total time elapsed: ", end_time-start_time)
+        print("total time elapsed: ", end_time - start_time)
         # give back particles to use as an ensemble
         return [particle.model for particle in self.particles]

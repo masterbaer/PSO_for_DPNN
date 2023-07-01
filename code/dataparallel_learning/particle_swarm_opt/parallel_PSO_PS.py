@@ -218,7 +218,7 @@ class PSO_PS:
                     loss.backward()
 
                     for param_current in particle.model.parameters():
-                        param_current.sub_(param_current.grad * self.learning_rate)
+                        param_current.data.sub_(param_current.grad * self.learning_rate)
 
                     particle.model = particle.model.to("cpu")
 

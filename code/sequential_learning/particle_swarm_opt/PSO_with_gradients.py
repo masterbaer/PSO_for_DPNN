@@ -111,14 +111,14 @@ class PSOWithGradients:
             # decay = torch.tensor(1 / (iteration + 1)).to(self.device)
 
             # decay with 1/ (1 + log(n+1)) for n = 1 ...
-            #decay = 1 / (1 + torch.log(torch.tensor(iteration + 1)))
+            # decay = 1 / (1 + torch.log(torch.tensor(iteration + 1)))
 
             # subtract the last value so the decay goes down to zero
             decay = 1 / (1 + torch.log(torch.tensor(iteration + 1))) - \
                     1 / (1 + torch.log(torch.tensor(self.max_iterations)))
 
             # velocity only contains inertia and the gradient
-            #decay = 0
+            # decay = 0
 
             # Use training batches for fitness evaluation and for gradient computation.
 
@@ -150,23 +150,22 @@ class PSOWithGradients:
                 loss = loss_fn(outputs, train_labels)
                 loss.backward()
 
-                with torch.no_grad():
-                    # Update particle velocity and position. The methods with '_' are in place operations.
-                    for i, (param_current, g_best, p_best, velocity_current) in enumerate(
-                            zip(particle.model.parameters(), global_best_model.parameters(),
-                                particle.best_model.parameters(), particle.velocity.parameters())):
-                        social_component = decay * self.social_weight * torch.rand(1).to(self.device) * (
-                                g_best.data - param_current.data)
+                # Update particle velocity and position. The methods with '_' are in place operations.
+                for i, (param_current, g_best, p_best, velocity_current) in enumerate(
+                        zip(particle.model.parameters(), global_best_model.parameters(),
+                            particle.best_model.parameters(), particle.velocity.parameters())):
+                    social_component = decay * self.social_weight * torch.rand(1).to(self.device) * (
+                            g_best.data - param_current.data)
 
-                        cognitive_component = decay * self.cognitive_weight * torch.rand(1).to(self.device) * (
-                                p_best.data - param_current.data)
+                    cognitive_component = decay * self.cognitive_weight * torch.rand(1).to(self.device) * (
+                            p_best.data - param_current.data)
 
-                        velocity = velocity_current * self.inertia_weight + \
-                                   social_component + \
-                                   cognitive_component \
-                                   - param_current.grad * self.learning_rate
+                    velocity = velocity_current * self.inertia_weight + \
+                               social_component + \
+                               cognitive_component \
+                               - param_current.grad * self.learning_rate
 
-                        param_current.add_(velocity)
+                    param_current.data.add_(velocity)
 
                 # Evaluate particle fitness using the fitness function
                 # particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)
@@ -211,6 +210,6 @@ class PSOWithGradients:
         self.model.load_state_dict(global_best_model.state_dict())
 
         end_time = time.perf_counter()
-        print("total time elapsed: ", end_time-start_time)
+        print("total time elapsed: ", end_time - start_time)
         # give back particles to use as an ensemble
         return [particle.model for particle in self.particles]
