@@ -217,6 +217,8 @@ class PSO_PS:
                     loss = loss_fn(outputs, train_labels)
                     loss.backward()
 
+                    # TODO maybe use a pytorch optimizer here and store individual optimizers in each particle.
+
                     for param_current in particle.model.parameters():
                         param_current.data.sub_(param_current.grad * self.learning_rate)
 
