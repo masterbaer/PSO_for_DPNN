@@ -193,7 +193,8 @@ class PSO_PINN:
                 particle.velocity = particle.velocity.to("cpu")
 
             if iteration % 20 == 0 and self.rank == 0:
-                print(f"Iteration {iteration + 1}/{self.max_iterations}, Best Loss: {global_best_loss}")
+                print(f"Iteration {iteration + 1}/{self.max_iterations}, Best Loss: {global_best_loss}, "
+                      f"accuracy: {global_best_accuracy}")
 
             # save the best loss and accuracy of all combined particles in each iteration
             if evaluate and self.rank == 0:
