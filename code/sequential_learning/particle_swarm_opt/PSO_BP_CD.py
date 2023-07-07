@@ -161,18 +161,21 @@ class PSO_BP_CD:
                 for i, (param_current, g_best, p_best, velocity_current) in enumerate(
                         zip(particle.model.parameters(), global_best_model.parameters(),
                             particle.best_model.parameters(), particle.velocity.parameters())):
+
                     social_component = decay * self.social_weight * torch.rand(1).to(self.device) * (
                             g_best.data - param_current.data)
 
                     cognitive_component = decay * self.cognitive_weight * torch.rand(1).to(self.device) * (
                             p_best.data - param_current.data)
 
-                    velocity = velocity_current * self.inertia_weight + \
+                    # Setting the inertia_weight to 0 leads to more stable optimizer.
+                    # We had a bug where we did not update the velocity (it stayed 0) which was more stable.
+                    velocity = velocity_current.data * self.inertia_weight + \
                                social_component + \
                                cognitive_component \
                                - param_current.grad * self.learning_rate
                     # The velocity is also decaying here unlike in the paper.
-
+                    velocity_current.data = velocity
                     param_current.data.add_(velocity)
 
                 # Evaluate particle fitness using the fitness function

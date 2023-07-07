@@ -112,3 +112,5 @@ if __name__ == '__main__':
         loss, accuracy = evaluate_model(model, test_loader)
         print("final test loss: ", loss)
         print("final test accuracy: ", accuracy)
+
+    # TODO do ensemble with weights and normal ensemble here as well

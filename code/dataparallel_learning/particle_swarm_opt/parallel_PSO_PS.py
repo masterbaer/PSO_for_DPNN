@@ -191,8 +191,9 @@ class PSO_PS:
                                     p_best.data - param_current.data)
 
                             # no gradient here
-                            velocity = velocity_current * self.inertia_weight + social_component + cognitive_component
+                            velocity = velocity_current.data * self.inertia_weight + social_component + cognitive_component
                             param_current.add_(velocity)
+                            velocity_current.data = velocity
 
                     particle.model = particle.model.to("cpu")
                     particle.best_model = particle.best_model.to("cpu")

@@ -152,12 +152,13 @@ class PSO_PINN:
                     cognitive_component = decay * self.cognitive_weight * torch.rand(1).to(self.device) * (
                             p_best.data - param_current.data)
 
-                    velocity = velocity_current * self.inertia_weight + \
+                    velocity = velocity_current.data * self.inertia_weight + \
                                social_component + \
                                cognitive_component \
                                - param_current.grad * self.learning_rate
 
                     param_current.data.add_(velocity)
+                    velocity_current.data = velocity
 
                 # Evaluate particle fitness using the fitness function
                 # particle_loss, particle_accuracy = evaluate_position(particle.model, self.valid_loader, self.device)

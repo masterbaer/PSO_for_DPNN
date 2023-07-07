@@ -158,12 +158,13 @@ class PSO_parallel_with_gradients_double_batches:
                     cognitive_component = decay * self.cognitive_weight * torch.rand(1).to(self.device) * (
                             p_best.data - param_current.data)
 
-                    velocity = velocity_current * self.inertia_weight + \
+                    velocity = velocity_current.data * self.inertia_weight + \
                                social_component + \
                                cognitive_component \
                                - param_current.grad * self.learning_rate
 
                     param_current.data.add_(velocity)
+                    velocity_current.data = velocity
 
                 # Evaluate using another batch (valid batch)
                 particle_loss, particle_accuracy = evaluate_position_single_batch(

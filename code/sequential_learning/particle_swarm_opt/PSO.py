@@ -127,9 +127,9 @@ class PSO:
                         cognitive_component = self.cognitive_weight * torch.rand(1).to(self.device) * (
                                 p_best.data - param_current.data)
 
-                        velocity = velocity_current * self.inertia_weight + social_component + cognitive_component
+                        velocity = velocity_current.data * self.inertia_weight + social_component + cognitive_component
                         # - param_current.grad.data * learning_rate
-
+                        velocity_current.data = velocity
                         param_current.add_(velocity)
 
                 # Evaluate particle fitness using the fitness function
