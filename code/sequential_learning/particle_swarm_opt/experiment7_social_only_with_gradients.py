@@ -49,7 +49,10 @@ if __name__ == '__main__':
         break
 
     model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)  # keep in cpu
-    pso = PSOWithGradientsOnlySocial(model=model, num_particles=20, inertia_weight=0.9,
+    #pso = PSOWithGradientsOnlySocial(model=model, num_particles=20, inertia_weight=0.9,
+    #                       social_weight=0.5, max_iterations=1000, train_loader=train_loader,
+    #                       valid_loader=valid_loader, learning_rate=0.01, device=device)
+    pso = PSOWithGradientsOnlySocial(model=model, num_particles=20, inertia_weight=0.0,
                            social_weight=0.5, max_iterations=1000, train_loader=train_loader,
                            valid_loader=valid_loader, learning_rate=0.01, device=device)
 

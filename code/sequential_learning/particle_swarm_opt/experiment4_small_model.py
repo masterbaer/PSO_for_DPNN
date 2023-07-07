@@ -44,7 +44,7 @@ if __name__ == '__main__':
 
     model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)  # keep in cpu
 
-    pso = PSO(model=model, num_particles=20, inertia_weight=0.1,
+    pso = PSO(model=model, num_particles=20, inertia_weight=0.0,
               social_weight=0.5, cognitive_weight=0.8, max_iterations=200, train_loader=train_loader,
               valid_loader=valid_loader, device=device)
     pso.optimize(evaluate=False, output1="experiment4_loss.pt", output2="experiment4_accuracy.pt")

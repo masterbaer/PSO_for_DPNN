@@ -75,7 +75,8 @@ if __name__ == '__main__':
     # We could also instead adapt the initial velocity but the paper did not mention how it was chosen.
 
     model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)  # keep in cpu
-    pso = PSO_BP_CD(model=model, num_particles=20, inertia_weight=0.99,
+    # inertia 0.99 in paper but we get error messages
+    pso = PSO_BP_CD(model=model, num_particles=20, inertia_weight=0.0,
                            social_weight=0.5, cognitive_weight=0.08, max_iterations=1000, train_loader=train_loader,
                            valid_loader=valid_loader, learning_rate=0.005, device=device)
 
