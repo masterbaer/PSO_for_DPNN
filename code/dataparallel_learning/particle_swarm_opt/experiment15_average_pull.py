@@ -38,6 +38,8 @@ if __name__ == '__main__':
     set_all_seeds(rank)
     b = 256  # Set batch size.
 
+    social_weight = float(sys.argv[1])
+
     if rank == 0:
         print(f"batchsize = {b}")
 
@@ -99,11 +101,12 @@ if __name__ == '__main__':
     model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)  # keep in cpu
 
     pso = AveragePull(model=model, inertia_weight=0.0,
-                 social_weight=0.5, max_iterations=1000, train_loader=train_loader,
+                 social_weight=social_weight, max_iterations=5000, train_loader=train_loader,
                  valid_loader=valid_loader, learning_rate=0.01, device=device, rank=rank, world_size=world_size,
-                 comm=comm)
+                 comm=comm, step=10)
 
-    pso.optimize(evaluate=True, output1="experiment15_loss.pt", output2="experiment15_accuracy.pt")
+    pso.optimize(evaluate=True, output1=f"experiment15_loss_{social_weight}.pt",
+                 output2=f"experiment15_accuracy_{social_weight}.pt")
     # trained_models = pso.optimize()
 
     if rank == 0:

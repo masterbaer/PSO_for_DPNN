@@ -79,6 +79,8 @@ class AveragePull:
 
             if iteration % self.step == 0 and iteration != 0:
                 # synchronization via average pull
+                # see https://discuss.pytorch.org/t/average-each-weight-of-two-models/77008 for averaging two
+                # models.
 
                 state_dict = self.model.state_dict()
 
@@ -132,8 +134,10 @@ class AveragePull:
                 particle_loss, particle_accuracy = evaluate_model(self.model, self.valid_loader, self.device)
                 valid_loss_list.append(particle_loss)
                 valid_accuracy_list.append(particle_accuracy)
-                print(f"iteration {iteration + 1}, accuracy: {particle_accuracy}")
-                print(f"time passed: {end_time_iteration - start_time}")
+
+                if self.rank == 0:
+                    print(f"iteration {iteration + 1}, accuracy: {particle_accuracy}")
+                    print(f"time passed: {end_time_iteration - start_time}")
 
         # After training
 
