@@ -37,11 +37,8 @@ if __name__ == '__main__':
     world_size = comm.Get_size()
     set_all_seeds(rank)
     b = 256  # Set batch size.
-    particles_per_rank = sys.argv[1]
-    particles_per_rank = int(particles_per_rank)
 
     if rank == 0:
-        print(f"using {particles_per_rank} particles per rank ")
         print(f"batchsize = {b}")
 
     # Get device used for training, e.g., check via torch.cuda.is_available().
@@ -100,10 +97,7 @@ if __name__ == '__main__':
         break
 
     model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)  # keep in cpu
-    #pso = PSO_PS(model=model, particles_per_rank=particles_per_rank, inertia_weight=0.90,
-    #                   social_weight=0.5, cognitive_weight=0.08, max_iterations=1000, train_loader=train_loader,
-    #                   valid_loader=valid_loader, learning_rate=0.01, device=device, rank=rank, world_size=world_size,
-    #                   comm=comm)
+
     pso = AveragePull(model=model, inertia_weight=0.0,
                  social_weight=0.5, max_iterations=1000, train_loader=train_loader,
                  valid_loader=valid_loader, learning_rate=0.01, device=device, rank=rank, world_size=world_size,
