@@ -105,8 +105,8 @@ if __name__ == '__main__':
                  valid_loader=valid_loader, learning_rate=0.01, device=device, rank=rank, world_size=world_size,
                  comm=comm, step=10,  init_strat="random")
 
-    pso.optimize(evaluate=True, output1=f"experiment15_loss_{social_weight}.pt",
-                 output2=f"experiment15_accuracy_{social_weight}.pt")
+    pso.optimize(evaluate=True, output1=f"experiment16_loss_{social_weight}.pt",
+                 output2=f"experiment16_accuracy_{social_weight}.pt")
     # trained_models = pso.optimize()
 
     if rank == 0:
