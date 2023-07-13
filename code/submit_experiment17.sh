@@ -28,3 +28,5 @@ mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_random_in
 mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_random_init.py 1.0 512
 mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_random_init.py 0.5 1024
 mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_random_init.py 1.0 1024
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_random_init.py 0.5 2048
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_random_init.py 1.0 2048
