@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=experiment16         # job name
+#SBATCH --job-name=experiment17         # job name
 #SBATCH --partition=multiple            # queue for resource allocation
 #SBATCH --nodes=4                       # number of nodes to be used
 #SBATCH --time=04:00:00                   # wall-clock time limit
@@ -22,9 +22,9 @@ source venv/bin/activate      # Activate your virtual environment.
 # Here we are trying different batch sizes to see any differences between the two.
 # No linear scaling/gradual warmup is used.
 
-mpirun python -u dataparallel_learning/particle_swarm_opt/experiment16_random_init.py 0.5 256
-mpirun python -u dataparallel_learning/particle_swarm_opt/experiment16_random_init.py 1.0 256
-mpirun python -u dataparallel_learning/particle_swarm_opt/experiment16_random_init.py 0.5 512
-mpirun python -u dataparallel_learning/particle_swarm_opt/experiment16_random_init.py 1.0 512
-mpirun python -u dataparallel_learning/particle_swarm_opt/experiment16_random_init.py 0.5 1024
-mpirun python -u dataparallel_learning/particle_swarm_opt/experiment16_random_init.py 1.0 1024
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_random_init.py 0.5 256
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_random_init.py 1.0 256
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_random_init.py 0.5 512
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_random_init.py 1.0 512
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_random_init.py 0.5 1024
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_random_init.py 1.0 1024
