@@ -54,7 +54,9 @@ class AveragePullMomentum:
         self.momentum_queue = []
         for i in range(momentum_queue_size):
             momentum_local = copy.deepcopy(self.momentum).to(self.device)
-            self.momentum_queue.append(momentum_local)  # start with zeros
+            for param in momentum_local.parameters():
+                param.data = torch.zeros_like(param.data)  # start with zeros
+            self.momentum_queue.append(momentum_local)
 
         self.inertia_weight = torch.tensor(inertia_weight).to(self.device)
         self.social_weight = torch.tensor(social_weight).to(self.device)
