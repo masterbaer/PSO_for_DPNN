@@ -116,6 +116,7 @@ if __name__ == '__main__':
                       valid_loader=valid_loader, learning_rate=(0.01 * ratio), device=device, rank=rank, world_size=world_size,
                       comm=comm, step=10)
 
+    # TODO 'step' is not scaled with the batch size. Synchronization may be relevant too.
 
     pso.optimize(evaluate=True, output1=f"experiment17_loss_{social_weight}_{b}.pt",
                  output2=f"experiment17_accuracy_{social_weight}_{b}.pt")
