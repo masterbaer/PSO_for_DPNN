@@ -46,7 +46,7 @@ if __name__ == '__main__':
     # increase batch size to perhaps see differences between average pull and synchronous sgd
     # note that we do not decrease the number of iterations here, so an overall better result is expected
     # the goal is to simply find out whether both approaches behave similarly or differently
-    b = float(sys.argv[2])
+    b = int(sys.argv[2])
 
 
     if rank == 0:
