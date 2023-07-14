@@ -14,6 +14,7 @@ We do not use the typical "hacks" that try to avoid large batch size effects suc
 the batch size or using gradual warmup of the learning rate. 
 """
 
+
 def evaluate_model(model, test_data_loader):
     #  Compute Loss
     loss_fn = torch.nn.CrossEntropyLoss()
@@ -47,7 +48,8 @@ if __name__ == '__main__':
     # note that we do not decrease the number of iterations here, so an overall better result is expected
     # the goal is to simply find out whether both approaches behave similarly or differently
     b = int(sys.argv[2])
-
+    default_b = 256
+    ratio = b / default_b  # how much larger is the batch size. Use this ratio to reduce the number of iterations
 
     if rank == 0:
         print(f"batchsize = {b}")
@@ -110,9 +112,9 @@ if __name__ == '__main__':
     model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)  # keep in cpu
 
     pso = AveragePull(model=model, inertia_weight=0.0,
-                 social_weight=social_weight, max_iterations=5000, train_loader=train_loader,
-                 valid_loader=valid_loader, learning_rate=0.01, device=device, rank=rank, world_size=world_size,
-                 comm=comm, step=10)
+                      social_weight=social_weight, max_iterations=int(5000 / ratio), train_loader=train_loader,
+                      valid_loader=valid_loader, learning_rate=0.01, device=device, rank=rank, world_size=world_size,
+                      comm=comm, step=10)
 
     pso.optimize(evaluate=True, output1=f"experiment17_loss_{social_weight}_{b}.pt",
                  output2=f"experiment17_accuracy_{social_weight}_{b}.pt")

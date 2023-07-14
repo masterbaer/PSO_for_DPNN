@@ -22,18 +22,18 @@ source venv/bin/activate      # Activate your virtual environment.
 # Here we are trying different batch sizes to see any differences between the two.
 # No linear scaling/gradual warmup is used.
 
-#mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_average_pull_scalability.py 0.5 256
-#mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_average_pull_scalability.py 1.0 256
-#mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_average_pull_scalability.py 0.5 512
-#mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_average_pull_scalability.py 1.0 512
-#mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_average_pull_scalability.py 0.5 1024
-#mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_average_pull_scalability.py 1.0 1024 # needs 3h until here
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_average_pull_scalability.py 0.5 256
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_average_pull_scalability.py 1.0 256
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_average_pull_scalability.py 0.5 512
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_average_pull_scalability.py 1.0 512
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_average_pull_scalability.py 0.5 1024
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_average_pull_scalability.py 1.0 1024
 mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_average_pull_scalability.py 0.5 2048
 mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_average_pull_scalability.py 1.0 2048
 mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_average_pull_scalability.py 0.5 4096
 mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_average_pull_scalability.py 1.0 4096
-#mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_average_pull_scalability.py 0.5 8192
-#mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_average_pull_scalability.py 1.0 8192
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_average_pull_scalability.py 0.5 8192
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment17_average_pull_scalability.py 1.0 8192
 
 # There are:
 # 11250 training samples per rank --> largest batch size to test should be 8192
