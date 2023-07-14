@@ -10,8 +10,7 @@ from model import NeuralNetwork
 
 """
 We are seeing if both approaches behave any differently under an increasing batch size.
-We do not use the typical "hacks" that try to avoid large batch size effects such as increasing the learning rate with
-the batch size or using gradual warmup of the learning rate. 
+We use the linear scaling rule (see https://arxiv.org/pdf/1706.02677.pdf) but not the gradual warmup.  
 """
 
 
@@ -111,10 +110,12 @@ if __name__ == '__main__':
 
     model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)  # keep in cpu
 
+    # the learning rate and the max-iterations are both scaled with ratio of the batch size (compared to 256)
     pso = AveragePull(model=model, inertia_weight=0.0,
                       social_weight=social_weight, max_iterations=int(5000 / ratio), train_loader=train_loader,
-                      valid_loader=valid_loader, learning_rate=0.01, device=device, rank=rank, world_size=world_size,
+                      valid_loader=valid_loader, learning_rate=(0.01 * ratio), device=device, rank=rank, world_size=world_size,
                       comm=comm, step=10)
+
 
     pso.optimize(evaluate=True, output1=f"experiment17_loss_{social_weight}_{b}.pt",
                  output2=f"experiment17_accuracy_{social_weight}_{b}.pt")
