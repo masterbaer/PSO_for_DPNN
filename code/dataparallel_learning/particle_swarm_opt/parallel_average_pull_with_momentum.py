@@ -29,7 +29,9 @@ class AveragePullMomentum:
                  step=10,
                  init_strat="equal",
                  momentum_queue_size=10,
-                 momentum_coefficient=0.05):
+                 momentum_coefficient=0.05,
+                 use_average_pull_momentum=True):
+        self.use_average_pull_momentum = use_average_pull_momentum
         self.device = device
         self.comm = comm
         self.rank = rank
@@ -116,23 +118,22 @@ class AveragePullMomentum:
                 for param, velocity in zip(self.model.parameters(), self.velocity.parameters()):
                     param.data.add_(velocity)
 
-                # TODO: maybe not use the velocity for momentum as it may cause issues?
-                # TODO: maybe just use a small momentum coefficient to avoid issues when using this?
 
                 # update the momentum by adding the velocity and subtracting the old value and updating the queue
                 # pop and subtract the old values
-                old_net = self.momentum_queue.pop(0)
-                for param_momentum, param_old_value in zip(self.momentum.parameters(), old_net.parameters()):
-                    param_momentum.data.sub_(param_old_value.data)
+                if self.use_average_pull_momentum:
+                    old_net = self.momentum_queue.pop(0)
+                    for param_momentum, param_old_value in zip(self.momentum.parameters(), old_net.parameters()):
+                        param_momentum.data.sub_(param_old_value.data)
 
-                # update the old net and append it to the queue again
-                for param_old, velocity_current in zip(old_net.parameters(), self.velocity.parameters()):
-                    param_old.data = velocity_current.data
-                self.momentum_queue.append(old_net)
+                    # update the old net and append it to the queue again
+                    for param_old, velocity_current in zip(old_net.parameters(), self.velocity.parameters()):
+                        param_old.data = velocity_current.data
+                    self.momentum_queue.append(old_net)
 
-                # add the new values to the current momentum
-                for param_momentum, param_new_value in zip(self.momentum.parameters(), old_net.parameters()):
-                    param_momentum.data.add_(param_new_value.data)
+                    # add the new values to the current momentum
+                    for param_momentum, param_new_value in zip(self.momentum.parameters(), old_net.parameters()):
+                        param_momentum.data.add_(param_new_value.data)
 
                 # update the particle position by adding the momentum
                 for param, momentum in zip(self.model.parameters(), self.momentum.parameters()):

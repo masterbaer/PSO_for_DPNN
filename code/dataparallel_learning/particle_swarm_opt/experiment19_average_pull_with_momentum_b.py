@@ -1,5 +1,7 @@
 """
+Trying momentum with only 5 gradients/velocites and testing the use of the pull in the momentum.
 """
+import sys
 
 import torch
 import torchvision
@@ -37,6 +39,8 @@ if __name__ == '__main__':
     rank = comm.Get_rank()
     world_size = comm.Get_size()
     set_all_seeds(rank)
+
+    use_average_pull_momentum = bool(sys.argv[1])
 
     print("My rank is: ", rank)
 
@@ -103,9 +107,12 @@ if __name__ == '__main__':
                               social_weight=0.5, max_iterations=5000, train_loader=train_loader,
                               valid_loader=valid_loader, learning_rate=0.01, device=device, rank=rank,
                               world_size=world_size,
-                              comm=comm)
+                              comm=comm,
+                              use_average_pull_momentum=use_average_pull_momentum,
+                              momentum_queue_size=5)
 
-    pso.optimize(output1="experiment18_loss.pt", output2="experiment18_accuracy.pt")
+    pso.optimize(output1=f"experiment19_loss_{use_average_pull_momentum}.pt",
+                 output2=f"experiment19_accuracy{use_average_pull_momentum}.pt")
 
     if rank == 0:
         # final loss on test set

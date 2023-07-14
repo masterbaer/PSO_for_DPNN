@@ -7,3 +7,4 @@ if __name__ == '__main__':
     X = np.arange(0, 5000, 5)
     plt.plot(X, accuracies)
     plt.savefig("experiment18_accuracies.png")
+
