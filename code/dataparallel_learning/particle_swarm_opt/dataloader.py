@@ -18,7 +18,8 @@ def get_dataloaders_cifar10_distributed(batch_size,
                                 root='../../data',
                                 validation_fraction=0.1,
                                 train_transforms=None,
-                                test_transforms=None):
+                                test_transforms=None,
+                                valid_batch_size = 128):
     if train_transforms is None:
         train_transforms = torchvision.transforms.ToTensor()
     if test_transforms is None:
@@ -81,7 +82,7 @@ def get_dataloaders_cifar10_distributed(batch_size,
 
     valid_loader = torch.utils.data.DataLoader(
         dataset=valid_dataset,
-        batch_size=batch_size,
+        batch_size=valid_batch_size,
         drop_last=True,
         sampler=valid_sampler
     )
