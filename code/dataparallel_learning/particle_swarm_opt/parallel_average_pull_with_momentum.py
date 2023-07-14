@@ -29,7 +29,7 @@ class AveragePullMomentum:
                  step=10,
                  init_strat="equal",
                  momentum_queue_size=10,
-                 momentum_coefficient=0.5):
+                 momentum_coefficient=0.05):
         self.device = device
         self.comm = comm
         self.rank = rank
