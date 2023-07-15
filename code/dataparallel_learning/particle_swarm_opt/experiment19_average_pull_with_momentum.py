@@ -41,6 +41,8 @@ if __name__ == '__main__':
     set_all_seeds(rank)
 
     use_average_pull_momentum = bool(sys.argv[1])
+    if rank == 0:
+        print("Using momentum on social pull as well: ", use_average_pull_momentum)
 
     print("My rank is: ", rank)
 
@@ -112,7 +114,7 @@ if __name__ == '__main__':
                               momentum_queue_size=5)
 
     pso.optimize(output1=f"experiment19_loss_{use_average_pull_momentum}.pt",
-                 output2=f"experiment19_accuracy{use_average_pull_momentum}.pt")
+                 output2=f"experiment19_accuracy_{use_average_pull_momentum}.pt")
 
     if rank == 0:
         # final loss on test set

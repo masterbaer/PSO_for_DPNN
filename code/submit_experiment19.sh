@@ -18,5 +18,6 @@ module load devel/cuda/10.2
 
 source venv/bin/activate      # Activate your virtual environment.
 
-mpirun python -u dataparallel_learning/particle_swarm_opt/experiment19_average_pull_with_momentum.py "True"
 mpirun python -u dataparallel_learning/particle_swarm_opt/experiment19_average_pull_with_momentum.py "False"
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment19_average_pull_with_momentum.py "True"
+
