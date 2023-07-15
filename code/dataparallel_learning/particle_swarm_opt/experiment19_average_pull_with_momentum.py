@@ -116,7 +116,8 @@ if __name__ == '__main__':
                               world_size=world_size,
                               comm=comm,
                               use_average_pull_momentum=use_average_pull_momentum,
-                              momentum_queue_size=5)
+                              momentum_queue_size=5,
+                              momentum_coefficient=0.005)
 
     pso.optimize(output1=f"experiment19_loss_{use_average_pull_momentum}.pt",
                  output2=f"experiment19_accuracy_{use_average_pull_momentum}.pt")
