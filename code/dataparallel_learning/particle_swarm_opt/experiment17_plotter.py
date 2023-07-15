@@ -1,0 +1,66 @@
+import torch
+from matplotlib import pyplot as plt
+import numpy as np
+
+if __name__ == '__main__':
+    accuracies_point_five_256 = torch.load("experiment17_accuracy_0.5_256.pt")
+    accuracies_one_256 = torch.load("experiment17_accuracy_1.0_256.pt")
+    accuracies_point_five_512 = torch.load("experiment17_accuracy_0.5_512.pt")
+    accuracies_one_512 = torch.load("experiment17_accuracy_1.0_512.pt")
+    accuracies_point_five_1024 = torch.load("experiment17_accuracy_0.5_1024.pt")
+    accuracies_one_1024 = torch.load("experiment17_accuracy_1.0_1024.pt")
+    accuracies_point_five_2048 = torch.load("experiment17_accuracy_0.5_2048.pt")
+    accuracies_one_2048 = torch.load("experiment17_accuracy_1.0_2048.pt")
+    accuracies_point_five_4096 = torch.load("experiment17_accuracy_0.5_4096.pt")
+    accuracies_one_4096 = torch.load("experiment17_accuracy_1.0_4096.pt")
+    accuracies_point_five_8192 = torch.load("experiment17_accuracy_0.5_8192.pt")
+    accuracies_one_8192 = torch.load("experiment17_accuracy_1.0_8192.pt")
+
+    plt.plot(accuracies_point_five_256, color="r", label="0.5", linewidth=1)
+    plt.plot(accuracies_one_256, color="g", label="1", linewidth=1)
+    plt.ylabel("accuracies")
+    plt.xlabel("iterations / 5")
+    plt.legend()
+    plt.savefig("experiment17_accuracy_256.png")
+    plt.cla()
+
+    plt.plot(accuracies_point_five_512, color="r", label="0.5", linewidth=1)
+    plt.plot(accuracies_one_512, color="g", label="1", linewidth=1)
+    plt.ylabel("accuracies")
+    plt.xlabel("iterations / 5")
+    plt.legend()
+    plt.savefig("experiment17_accuracy_512.png")
+    plt.cla()
+
+    plt.plot(accuracies_point_five_1024, color="r", label="0.5", linewidth=1)
+    plt.plot(accuracies_one_1024, color="g", label="1", linewidth=1)
+    plt.ylabel("accuracies")
+    plt.xlabel("iterations / 5")
+    plt.legend()
+    plt.savefig("experiment17_accuracy_1024.png")
+    plt.cla()
+
+    plt.plot(accuracies_point_five_2048, color="r", label="0.5", linewidth=1)
+    plt.plot(accuracies_one_2048, color="g", label="1", linewidth=1)
+    plt.ylabel("accuracies")
+    plt.xlabel("iterations / 5")
+    plt.legend()
+    plt.savefig("experiment17_accuracy_2048.png")
+    plt.cla()
+
+    plt.plot(accuracies_point_five_4096, color="r", label="0.5", linewidth=1)
+    plt.plot(accuracies_one_4096, color="g", label="1", linewidth=1)
+    plt.ylabel("accuracies")
+    plt.xlabel("iterations / 5")
+    plt.legend()
+    plt.savefig("experiment17_accuracy_4096.png")
+    plt.cla()
+
+    plt.plot(accuracies_point_five_8192, color="r", label="0.5", linewidth=1)
+    plt.plot(accuracies_one_8192, color="g", label="1", linewidth=1)
+    plt.ylabel("accuracies")
+    plt.xlabel("iterations / 5")
+    plt.legend()
+    plt.savefig("experiment17_accuracy_8192.png")
+    plt.cla()
+
