@@ -40,7 +40,12 @@ if __name__ == '__main__':
     world_size = comm.Get_size()
     set_all_seeds(rank)
 
-    use_average_pull_momentum = bool(sys.argv[1])
+    use_average_pull_momentum_string = sys.argv[1]
+    use_average_pull_momentum = False
+    if use_average_pull_momentum_string == "True":
+        use_average_pull_momentum = True
+
+
     if rank == 0:
         print("Using momentum on social pull as well: ", use_average_pull_momentum)
 
