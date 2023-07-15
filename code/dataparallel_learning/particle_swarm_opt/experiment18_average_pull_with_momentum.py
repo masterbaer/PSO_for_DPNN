@@ -103,7 +103,8 @@ if __name__ == '__main__':
                               social_weight=0.5, max_iterations=5000, train_loader=train_loader,
                               valid_loader=valid_loader, learning_rate=0.01, device=device, rank=rank,
                               world_size=world_size,
-                              comm=comm)
+                              comm=comm,
+                              momentum_coefficient=0.05)
 
     pso.optimize(output1="experiment18_loss.pt", output2="experiment18_accuracy.pt")
 
