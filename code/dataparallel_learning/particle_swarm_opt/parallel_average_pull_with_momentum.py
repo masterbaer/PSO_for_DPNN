@@ -128,7 +128,7 @@ class AveragePullMomentum:
 
                     # update the old net and append it to the queue again
                     for param_old, velocity_current in zip(old_net.parameters(), self.velocity.parameters()):
-                        param_old.data = velocity_current.data
+                        param_old.data.copy_(velocity_current)
                     self.momentum_queue.append(old_net)
 
                     # add the new values to the current momentum
@@ -167,7 +167,7 @@ class AveragePullMomentum:
 
                 # update the old net and append it to the queue again
                 for param_old, param_current in zip(old_net.parameters(), self.model.parameters()):
-                    param_old.data = param_current.grad
+                    param_old.data.copy_(param_current.grad)
                 self.momentum_queue.append(old_net)
 
                 # add the new values to the current momentum
