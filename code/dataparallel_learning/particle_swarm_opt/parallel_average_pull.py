@@ -108,12 +108,12 @@ class AveragePull:
                     param_average.data.copy_(averaged_value)
 
                 # give the first values as a sanity check
-                for param in self.model.parameters():
-                    print(f"rank {self.rank} and value {param.data[0][0]}")
-                    break
-                for param in average_model.parameters():
-                    print(f"averaged value: {param.data[0][0]}")
-                    break
+                #for param in self.model.parameters():
+                #    print(f"rank {self.rank} and value {param.data[0][0]}")
+                #    break
+                #for param in average_model.parameters():
+                #    print(f"averaged value: {param.data[0][0]}")
+                #    break
 
                 # for key in average_state_dict:
                 #    value = state_dict[key]  # value to average
