@@ -74,6 +74,13 @@ class AveragePull:
         valid_accuracy_list = []
 
         start_time = time.perf_counter()
+
+        def tensor_add(a, b, datatype):
+            a.add_(b)
+            return a
+
+        tensor_add_Op = MPI.Op.Create(tensor_add, commute=True)
+
         for iteration in range(self.max_iterations):
 
             if iteration % self.step == 0 and iteration != 0:
@@ -90,10 +97,7 @@ class AveragePull:
                 # average_state_dict = average_model.state_dict()
 
                 # create a tensor addition operation for mpi
-                def tensor_add(a, b, datatype):
-                    a.add_(b)
-                    return a
-                tensor_add_Op = MPI.Op.Create(tensor_add, commute=True)
+
 
                 # maybe the sum with MPI.SUM causes problems? Lets change it to a custom tensor addition
                 for param_current, param_average in zip((self.model.parameters()), average_model.parameters()):
@@ -103,14 +107,13 @@ class AveragePull:
                     averaged_value = summed_value / self.world_size
                     param_average.data.copy_(averaged_value)
 
-                if iteration == 0 or iteration == 1 or iteration == 2:
-                    # give the first values as a sanity check
-                    for param in self.model.parameters():
-                        print(f"rank {self.rank} and value {param.data[0][0]}")
-                        break
-                    for param in average_model.parameters():
-                        print(f"averaged value: {param.data[0][0]}")
-                        break
+                # give the first values as a sanity check
+                for param in self.model.parameters():
+                    print(f"rank {self.rank} and value {param.data[0][0]}")
+                    break
+                for param in average_model.parameters():
+                    print(f"averaged value: {param.data[0][0]}")
+                    break
 
                 # for key in average_state_dict:
                 #    value = state_dict[key]  # value to average
