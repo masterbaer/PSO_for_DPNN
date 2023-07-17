@@ -90,7 +90,7 @@ class AveragePull:
                 # average_state_dict = average_model.state_dict()
 
                 # create a tensor addition operation for mpi
-                def tensor_add(a, b):
+                def tensor_add(a, b, datatype):
                     a.add_(b)
                 tensor_add_Op = MPI.Op.Create(tensor_add, commute=True)
 
