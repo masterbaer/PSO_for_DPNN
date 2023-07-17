@@ -3,7 +3,7 @@
 #SBATCH --job-name=experiment16         # job name
 #SBATCH --partition=multiple            # queue for resource allocation
 #SBATCH --nodes=4                       # number of nodes to be used
-#SBATCH --time=02:00:00                   # wall-clock time limit
+#SBATCH --time=00:05:00                   # wall-clock time limit, set to 2h
 #SBATCH --mem=4000                     # memory per node
 #SBATCH --cpus-per-task=1              # number of CPUs required per MPI task
 #SBATCH --ntasks-per-node=1             # maximum count of tasks per node

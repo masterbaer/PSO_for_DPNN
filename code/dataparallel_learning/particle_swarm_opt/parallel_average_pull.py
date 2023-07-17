@@ -92,13 +92,14 @@ class AveragePull:
                 # create a tensor addition operation for mpi
                 def tensor_add(a, b, datatype):
                     a.add_(b)
+                    return a
                 tensor_add_Op = MPI.Op.Create(tensor_add, commute=True)
 
                 # maybe the sum with MPI.SUM causes problems? Lets change it to a custom tensor addition
                 for param_current, param_average in zip((self.model.parameters()), average_model.parameters()):
                     value = param_current.data
                     summed_value = torch.zeros_like(param_current.data)
-                    self.comm.Allreduce(value, summed_value, op=tensor_add_Op)
+                    summed_value = self.comm.allreduce(value, op=tensor_add_Op)
                     averaged_value = summed_value / self.world_size
                     param_average.data.copy_(averaged_value)
 
