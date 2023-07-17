@@ -47,6 +47,8 @@ class AveragePull:
 
         self.model = model.to(self.device)
         self.average_model = copy.deepcopy(model).to(self.device)
+        for param in self.average_model.parameters():
+            param.data = torch.zeros_like(param.data)
 
         self.velocity = copy.deepcopy(model).to(self.device)
         for param in self.velocity.parameters():
@@ -84,17 +86,13 @@ class AveragePull:
 
                 state_dict = self.model.state_dict()
 
-                # convert state_dict values to tensors
-                for key in state_dict:
-                    state_dict[key] = torch.tensor(state_dict[key])
-
                 # create average model with zeros
                 average_state_dict = {key: torch.zeros_like(state_dict[key]) for key in state_dict}
 
                 for key in average_state_dict:
                     value = state_dict[key]  # value to average
-                    self.comm.Allreduce(value, average_state_dict[key], op=MPI.SUM)
-                    average_state_dict[key] /= self.world_size
+                    summed_value = self.comm.allreduce(value, op=MPI.SUM)
+                    average_state_dict[key] = summed_value / self.world_size
 
                 self.average_model.load_state_dict(average_state_dict)
 
@@ -105,9 +103,8 @@ class AveragePull:
                     average_pull = self.social_weight * (param_average.data - param_current.data)
 
                     velocity = velocity_current.data * self.inertia_weight + average_pull
-
                     param_current.data.add_(velocity)
-                    velocity_current.data = velocity
+                    velocity_current.data.copy_(velocity)
 
             else:
                 # local SGD update

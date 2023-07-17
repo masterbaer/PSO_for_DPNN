@@ -39,6 +39,7 @@ if __name__ == '__main__':
     b = 256  # Set batch size.
 
     social_weight = float(sys.argv[1])
+    print("social weight: ", social_weight)
 
     if rank == 0:
         print(f"batchsize = {b}")
