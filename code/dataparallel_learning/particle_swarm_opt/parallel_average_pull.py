@@ -46,9 +46,6 @@ class AveragePull:
         self.world_size = world_size
 
         self.model = model.to(self.device)
-        self.average_model = copy.deepcopy(model).to(self.device)
-        for param in self.average_model.parameters():
-            param.data = torch.zeros_like(param.data)
 
         self.velocity = copy.deepcopy(model).to(self.device)
         for param in self.velocity.parameters():
@@ -84,22 +81,46 @@ class AveragePull:
                 # see https://discuss.pytorch.org/t/average-each-weight-of-two-models/77008 for averaging two
                 # models.
 
-                state_dict = self.model.state_dict()
+                # state_dict = self.model.state_dict()
 
-                # create average model with zeros
-                average_state_dict = {key: torch.zeros_like(state_dict[key]) for key in state_dict}
+                average_model = copy.deepcopy(self.model).to(self.device)
+                for param in average_model.parameters():
+                    param.data = torch.zeros_like(param.data)
 
-                for key in average_state_dict:
-                    value = state_dict[key]  # value to average
-                    summed_value = self.comm.allreduce(value, op=MPI.SUM)
-                    average_state_dict[key] = summed_value / self.world_size
+                # average_state_dict = average_model.state_dict()
 
-                self.average_model.load_state_dict(average_state_dict)
+                # create a tensor addition operation for mpi
+                def tensor_add(a, b):
+                    a.add_(b)
+                tensor_add_Op = MPI.Op.Create(tensor_add, commute=True)
+
+                # maybe the sum with MPI.SUM causes problems? Lets change it to a custom tensor addition
+                for param_current, param_average in zip((self.model.parameters()), average_model.parameters()):
+                    value = param_current.data
+                    summed_value = torch.zeros_like(param_current.data)
+                    self.comm.Allreduce(value, summed_value, op=tensor_add_Op)
+                    averaged_value = summed_value / self.world_size
+                    param_average.data.copy_(averaged_value)
+
+                if iteration == 0 or iteration == 1 or iteration == 2:
+                    # give the first values as a sanity check
+                    for param in self.model.parameters():
+                        print(f"rank {self.rank} and value {param.data[0][0]}")
+                        break
+                    for param in average_model.parameters():
+                        print(f"averaged value: {param.data[0][0]}")
+                        break
+
+                # for key in average_state_dict:
+                #    value = state_dict[key]  # value to average
+                #    summed_value = self.comm.allreduce(value, op=MPI.SUM)
+                #    average_state_dict[key] = summed_value / self.world_size
+                #average_model.load_state_dict(average_state_dict)
 
                 # perform average pull
 
                 for i, (param_current, param_average, velocity_current) in enumerate(
-                        zip(self.model.parameters(), self.average_model.parameters(), self.velocity.parameters())):
+                        zip(self.model.parameters(), average_model.parameters(), self.velocity.parameters())):
                     average_pull = self.social_weight * (param_average.data - param_current.data)
 
                     velocity = velocity_current.data * self.inertia_weight + average_pull
