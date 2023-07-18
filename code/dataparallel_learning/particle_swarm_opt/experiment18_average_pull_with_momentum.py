@@ -75,7 +75,7 @@ if __name__ == '__main__':
     ])
 
     # GET PYTORCH DATALOADERS FOR TRAINING AND VALIDATION DATASET.
-    train_loader, valid_loader = get_dataloaders_cifar10_distributed_full_validation(
+    train_loader, valid_loader = get_dataloaders_cifar10_distributed(
         batch_size=b,
         root="../../data",
         validation_fraction=0.1,

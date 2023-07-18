@@ -157,9 +157,8 @@ def get_dataloaders_cifar10_distributed_full_validation(batch_size,
     valid_loader = torch.utils.data.DataLoader(
         dataset=valid_dataset,
         batch_size=valid_batch_size,
-        num_workers=num_workers,
         sampler=valid_sampler,
-        drop_last=True
+        shuffle=False
     )
 
     if rank == 0:
