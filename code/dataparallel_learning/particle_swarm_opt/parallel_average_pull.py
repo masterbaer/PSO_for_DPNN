@@ -127,7 +127,7 @@ class AveragePull:
                 for i, (param_current, param_average, velocity_current) in enumerate(
                         zip(self.model.parameters(), average_model.parameters(), self.velocity.parameters())):
 
-                    if iteration <= 15 and self.rank == 0:
+                    if iteration <= 15 and self.rank == 0 and i == 0:
                         print("param_current: ", param_current.data[0][0])
                         print("param_average: ", param_average.data[0][0])
                         print("social_weight: ", self.social_weight)
@@ -140,7 +140,7 @@ class AveragePull:
                     param_current.data.add_(velocity)
                     velocity_current.data.copy_(velocity)
 
-                    if iteration <= 15 and self.rank == 0:
+                    if iteration <= 15 and self.rank == 0 and i == 0:
                         print("after update: ")
                         print("velocity-term: ", velocity[0][0])
                         print("new velocity: ", velocity_current.data[0][0])
