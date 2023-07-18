@@ -75,11 +75,10 @@ class AveragePull:
 
         start_time = time.perf_counter()
 
-        def tensor_add(a, b, datatype):
-            a.add_(b)
-            return a
-
-        tensor_add_Op = MPI.Op.Create(tensor_add, commute=True)
+        #def tensor_add(a, b, datatype):
+        #    a.add_(b)
+        #    return a
+        #tensor_add_Op = MPI.Op.Create(tensor_add, commute=True)
 
         for iteration in range(self.max_iterations):
 
@@ -98,7 +97,7 @@ class AveragePull:
 
                 # create a tensor addition operation for mpi
 
-                # this works
+                # this works as well
                 # for param_current, param_average in zip((self.model.parameters()), average_model.parameters()):
                 #    value = param_current.data
                 #    summed_value = torch.zeros_like(param_current.data)
@@ -106,7 +105,6 @@ class AveragePull:
                 #    averaged_value = summed_value / self.world_size
                 #    param_average.data.copy_(averaged_value)
 
-                # checking this for sanity again
                 for key in average_state_dict:
                     value = state_dict[key]  # value to average
                     summed_value = self.comm.allreduce(value, op=MPI.SUM)
@@ -114,25 +112,25 @@ class AveragePull:
                     average_model.load_state_dict(average_state_dict)
 
                 # give the first values as a sanity check
-                if iteration <= 15:
-                    for param in self.model.parameters():
-                        print(f"rank {self.rank} and value {param.data[0][0]}")
-                        break
-                    for param in average_model.parameters():
-                        print(f"averaged value: {param.data[0][0]}")
-                        break
+                #if iteration <= 15:
+                #    for param in self.model.parameters():
+                #        print(f"rank {self.rank} and value {param.data[0][0]}")
+                #        break
+                #    for param in average_model.parameters():
+                #        print(f"averaged value: {param.data[0][0]}")
+                #        break
 
                 # perform average pull
 
                 for i, (param_current, param_average, velocity_current) in enumerate(
                         zip(self.model.parameters(), average_model.parameters(), self.velocity.parameters())):
 
-                    if iteration <= 15 and self.rank == 0 and i == 0:
-                        print("param_current: ", param_current.data[0][0])
-                        print("param_average: ", param_average.data[0][0])
-                        print("social_weight: ", self.social_weight)
-                        print("velocity_current: ", velocity_current.data[0][0])
-                        print("inertia weight: ", self.inertia_weight)
+                    #if iteration <= 15 and self.rank == 0 and i == 0:
+                    #    print("param_current: ", param_current.data[0][0])
+                    #    print("param_average: ", param_average.data[0][0])
+                    #    print("social_weight: ", self.social_weight)
+                    #    print("velocity_current: ", velocity_current.data[0][0])
+                    #    print("inertia weight: ", self.inertia_weight)
 
                     average_pull = self.social_weight * (param_average.data - param_current.data)
 
@@ -140,11 +138,11 @@ class AveragePull:
                     param_current.data.add_(velocity)
                     velocity_current.data.copy_(velocity)
 
-                    if iteration <= 15 and self.rank == 0 and i == 0:
-                        print("after update: ")
-                        print("velocity-term: ", velocity[0][0])
-                        print("new velocity: ", velocity_current.data[0][0])
-                        print("new param: ", param_current.data[0][0])
+                    #if iteration <= 15 and self.rank == 0 and i == 0:
+                    #    print("after update: ")
+                    #    print("velocity-term: ", velocity[0][0])
+                    #    print("new velocity: ", velocity_current.data[0][0])
+                    #    print("new param: ", param_current.data[0][0])
 
             else:
                 # local SGD update
