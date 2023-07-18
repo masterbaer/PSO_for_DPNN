@@ -152,7 +152,7 @@ def get_dataloaders_cifar10_distributed_full_validation(batch_size,
     )
 
     # give the full validation set to all workers
-    valid_sampler = torch.utils.data.SubsetRandomSampler(valid_indices)
+    valid_sampler = torch.utils.data.SequentialSampler(valid_dataset)
 
     valid_loader = torch.utils.data.DataLoader(
         dataset=valid_dataset,
