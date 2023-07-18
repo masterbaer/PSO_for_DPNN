@@ -174,7 +174,7 @@ class AveragePullMomentum:
                 for param_momentum, param_new_value in zip(self.momentum.parameters(), old_net.parameters()):
                     param_momentum.data.add_(param_new_value.data)
 
-            if iteration % 5 == 0:
+            if iteration % 20 == 0:
                 # validation accuracy on first particle
                 end_time_iteration = time.perf_counter()
                 particle_loss, particle_accuracy = evaluate_model(self.model, self.valid_loader, self.device)

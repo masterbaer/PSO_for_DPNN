@@ -163,7 +163,7 @@ class AveragePull:
                 for param_current in self.model.parameters():
                     param_current.data.sub_(param_current.grad * self.learning_rate)
 
-            if iteration % 5 == 0:
+            if iteration % 20 == 0:
                 # validation accuracy on first particle
                 end_time_iteration = time.perf_counter()
                 particle_loss, particle_accuracy = evaluate_model(self.model, self.valid_loader, self.device)

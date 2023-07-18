@@ -4,7 +4,8 @@ import torch
 import torchvision
 from mpi4py import MPI
 
-from dataloader import set_all_seeds, get_dataloaders_cifar10_distributed
+from dataloader import set_all_seeds, get_dataloaders_cifar10_distributed, \
+    get_dataloaders_cifar10_distributed_full_validation
 from parallel_PSO_average_pull import PSOAveragePull
 from model import NeuralNetwork
 
@@ -62,7 +63,7 @@ if __name__ == '__main__':
     ])
 
     # GET PYTORCH DATALOADERS FOR TRAINING AND VALIDATION DATASET.
-    train_loader, valid_loader = get_dataloaders_cifar10_distributed(
+    train_loader, valid_loader = get_dataloaders_cifar10_distributed_full_validation(
         batch_size=b,
         root="../../data",
         validation_fraction=0.1,
