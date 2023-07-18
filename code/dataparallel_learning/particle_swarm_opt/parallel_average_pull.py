@@ -29,7 +29,7 @@ class AveragePull:
     def __init__(self,
                  model,
                  inertia_weight: float,
-                 social_weight: float,
+                 average_pull_weight: float,
                  max_iterations: int,
                  learning_rate: float,
                  valid_loader,
@@ -52,7 +52,7 @@ class AveragePull:
             param.data = torch.zeros_like(param.data)
 
         self.inertia_weight = torch.tensor(inertia_weight).to(self.device)
-        self.social_weight = torch.tensor(social_weight).to(self.device)
+        self.average_pull_weight = torch.tensor(average_pull_weight).to(self.device)
 
         self.learning_rate = torch.tensor(learning_rate).to(self.device)
         self.step = step
@@ -132,7 +132,7 @@ class AveragePull:
                     #    print("velocity_current: ", velocity_current.data[0][0])
                     #    print("inertia weight: ", self.inertia_weight)
 
-                    average_pull = self.social_weight * (param_average.data - param_current.data)
+                    average_pull = self.average_pull_weight * (param_average.data - param_current.data)
 
                     velocity = velocity_current.data * self.inertia_weight + average_pull
                     param_current.data.add_(velocity)

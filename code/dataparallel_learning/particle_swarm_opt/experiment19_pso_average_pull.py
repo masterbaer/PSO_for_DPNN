@@ -1,6 +1,3 @@
-"""
-Trying momentum with only 5 gradients/velocites and testing the use of the pull in the momentum.
-"""
 import sys
 
 import torch
@@ -8,7 +5,7 @@ import torchvision
 from mpi4py import MPI
 
 from dataloader import set_all_seeds, get_dataloaders_cifar10_distributed
-from parallel_average_pull_with_momentum import AveragePullMomentum
+from parallel_PSO_average_pull import PSOAveragePull
 from model import NeuralNetwork
 
 
@@ -39,19 +36,10 @@ if __name__ == '__main__':
     rank = comm.Get_rank()
     world_size = comm.Get_size()
     set_all_seeds(rank)
-
-    use_average_pull_momentum_string = sys.argv[1]
-    use_average_pull_momentum = False
-    if use_average_pull_momentum_string == "True":
-        use_average_pull_momentum = True
-
+    b = 256  # Set batch size.
 
     if rank == 0:
-        print("Using momentum on social pull as well: ", use_average_pull_momentum)
-
-    print("My rank is: ", rank)
-
-    b = 256  # Set batch size.
+        print(f"batchsize = {b}")
 
     # Get device used for training, e.g., check via torch.cuda.is_available().
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')  # Set device.
@@ -110,17 +98,14 @@ if __name__ == '__main__':
 
     model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)  # keep in cpu
 
-    pso = AveragePullMomentum(model=model, inertia_weight=0.0,
-                              average_pull_weight=0.5, max_iterations=5000, train_loader=train_loader,
-                              valid_loader=valid_loader, learning_rate=0.01, device=device, rank=rank,
-                              world_size=world_size,
-                              comm=comm,
-                              use_average_pull_momentum=use_average_pull_momentum,
-                              momentum_queue_size=5,
-                              momentum_coefficient=0.005)
+    pso = PSOAveragePull(model=model, inertia_weight=0.5,
+                 average_pull_weight=0.1, max_iterations=10000, train_loader=train_loader,
+                 valid_loader=valid_loader, learning_rate=0.01, device=device, rank=rank, world_size=world_size,
+                 comm=comm, step=10)
 
-    pso.optimize(output1=f"experiment19_loss_{use_average_pull_momentum}.pt",
-                 output2=f"experiment19_accuracy_{use_average_pull_momentum}.pt")
+    pso.optimize(evaluate=True, output1=f"experiment19_loss.pt",
+                 output2=f"experiment19_accuracy.pt")
+    # trained_models = pso.optimize()
 
     if rank == 0:
         # final loss on test set

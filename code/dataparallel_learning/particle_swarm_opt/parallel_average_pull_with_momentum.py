@@ -17,7 +17,7 @@ class AveragePullMomentum:
     def __init__(self,
                  model,
                  inertia_weight: float,
-                 social_weight: float,
+                 average_pull_weight: float,
                  max_iterations: int,
                  learning_rate: float,
                  valid_loader,
@@ -61,7 +61,7 @@ class AveragePullMomentum:
             self.momentum_queue.append(momentum_local)
 
         self.inertia_weight = torch.tensor(inertia_weight).to(self.device)
-        self.social_weight = torch.tensor(social_weight).to(self.device)
+        self.average_pull_weight = torch.tensor(average_pull_weight).to(self.device)
 
         self.learning_rate = torch.tensor(learning_rate).to(self.device)
         self.step = step
@@ -111,7 +111,7 @@ class AveragePullMomentum:
                 # update the velocity with the pull towards the average
                 for i, (param, param_average, velocity) in enumerate(
                         zip(self.model.parameters(), self.average_model.parameters(), self.velocity.parameters())):
-                    average_pull = self.social_weight * (param_average.data - param.data)
+                    average_pull = self.average_pull_weight * (param_average.data - param.data)
                     velocity.data = velocity.data * self.inertia_weight + average_pull
 
                 # update the particle position by adding the velocity

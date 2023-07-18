@@ -42,7 +42,7 @@ if __name__ == '__main__':
     world_size = comm.Get_size()
     set_all_seeds(rank)
 
-    social_weight = float(sys.argv[1])
+    average_pull_weight = float(sys.argv[1])
     # increase batch size to perhaps see differences between average pull and synchronous sgd
     # note that we do not decrease the number of iterations here, so an overall better result is expected
     # the goal is to simply find out whether both approaches behave similarly or differently
@@ -112,14 +112,14 @@ if __name__ == '__main__':
 
     # the learning rate and the max-iterations are both scaled with ratio of the batch size (compared to 256)
     pso = AveragePull(model=model, inertia_weight=0.0,
-                      social_weight=social_weight, max_iterations=int(5000 / ratio), train_loader=train_loader,
+                      average_pull_weight=average_pull_weight, max_iterations=int(5000 / ratio), train_loader=train_loader,
                       valid_loader=valid_loader, learning_rate=(0.01 * ratio), device=device, rank=rank, world_size=world_size,
                       comm=comm, step=10)
 
     # TODO 'step' is not scaled with the batch size. Synchronization may be relevant too.
 
-    pso.optimize(evaluate=True, output1=f"experiment17_loss_{social_weight}_{b}.pt",
-                 output2=f"experiment17_accuracy_{social_weight}_{b}.pt")
+    pso.optimize(evaluate=True, output1=f"experiment17_loss_{average_pull_weight}_{b}.pt",
+                 output2=f"experiment17_accuracy_{average_pull_weight}_{b}.pt")
     # trained_models = pso.optimize()
 
     if rank == 0:
