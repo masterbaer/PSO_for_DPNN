@@ -101,7 +101,7 @@ if __name__ == '__main__':
     model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)  # keep in cpu
 
     pso = AveragePull(model=model, inertia_weight=0.0,
-                 social_weight=social_weight, max_iterations=5000, train_loader=train_loader,
+                 social_weight=social_weight, max_iterations=10000, train_loader=train_loader,
                  valid_loader=valid_loader, learning_rate=0.01, device=device, rank=rank, world_size=world_size,
                  comm=comm, step=10)
 

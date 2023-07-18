@@ -3,7 +3,7 @@
 #SBATCH --job-name=experiment15         # job name
 #SBATCH --partition=multiple            # queue for resource allocation
 #SBATCH --nodes=4                       # number of nodes to be used
-#SBATCH --time=02:00:00                   # wall-clock time limit
+#SBATCH --time=04:00:00                   # wall-clock time limit
 #SBATCH --mem=4000                     # memory per node
 #SBATCH --cpus-per-task=1              # number of CPUs required per MPI task
 #SBATCH --ntasks-per-node=1             # maximum count of tasks per node
@@ -19,6 +19,8 @@ module load devel/cuda/10.2
 source venv/bin/activate      # Activate your virtual environment.
 
 mpirun python -u dataparallel_learning/particle_swarm_opt/experiment15_average_pull.py 0.0 # social weight is 0 --> independent local sgds
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment15_average_pull.py 0.01
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment15_average_pull.py 0.1
 mpirun python -u dataparallel_learning/particle_swarm_opt/experiment15_average_pull.py 0.5
 mpirun python -u dataparallel_learning/particle_swarm_opt/experiment15_average_pull.py 1.0 # every particle is assigned to the average
 
