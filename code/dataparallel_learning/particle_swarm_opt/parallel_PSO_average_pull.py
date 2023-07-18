@@ -94,11 +94,6 @@ class PSOAveragePull:
             loss.backward()
 
 
-            # update the parameters
-            for param_current in self.model.parameters():
-                param_current.data.sub_(param_current.grad * self.learning_rate)
-
-
             for i, (param_current, param_average, velocity_current) in enumerate(
                     zip(self.model.parameters(), average_model.parameters(), self.velocity.parameters())):
 
