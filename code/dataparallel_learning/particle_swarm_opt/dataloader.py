@@ -162,7 +162,7 @@ def get_dataloaders_cifar10_distributed_full_validation(batch_size,
     )
 
     if rank == 0:
-        print("train_loader number of batches: ", len(train_loader))
-        print("valid_loader number of batches: ", len(valid_loader))
+        print("train_loader number of batches for rank 0: ", len(train_loader))
+        print("valid_loader number of batches for rank 0: ", len(valid_loader))
 
     return train_loader, valid_loader
