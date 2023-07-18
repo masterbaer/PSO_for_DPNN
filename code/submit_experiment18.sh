@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=experiment19        # job name
+#SBATCH --job-name=experiment18        # job name
 #SBATCH --partition=multiple            # queue for resource allocation
 #SBATCH --nodes=4                       # number of nodes to be used
 #SBATCH --time=01:00:00                   # wall-clock time limit
