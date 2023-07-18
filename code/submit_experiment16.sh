@@ -19,5 +19,7 @@ module load devel/cuda/10.2
 source venv/bin/activate      # Activate your virtual environment.
 
 mpirun python -u dataparallel_learning/particle_swarm_opt/experiment16_random_init.py 0.0 # social weight is 0 --> independent local sgds
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment16_random_init.py 0.01
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment16_random_init.py 0.1
 mpirun python -u dataparallel_learning/particle_swarm_opt/experiment16_random_init.py 0.5
 mpirun python -u dataparallel_learning/particle_swarm_opt/experiment16_random_init.py 1.0 # every particle is assigned to the average
