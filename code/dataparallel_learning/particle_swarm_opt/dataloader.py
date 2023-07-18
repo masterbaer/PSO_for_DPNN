@@ -85,7 +85,9 @@ def get_dataloaders_cifar10_distributed(batch_size,
         drop_last=True,
         sampler=valid_sampler
     )
-
+    if rank == 0:
+        print("train_loader number of batches: ", len(train_loader))
+        print("valid_loader number of batches: ", len(valid_loader))
     return train_loader, valid_loader
 
 
@@ -113,7 +115,8 @@ def get_dataloaders_cifar10_distributed_full_validation(batch_size,
     valid_dataset = torchvision.datasets.CIFAR10(
         root=root,
         train=True,
-        transform=test_transforms
+        transform=test_transforms,
+        download=True
     )
 
     # Perform index-based train-validation split of original training data.
@@ -158,5 +161,9 @@ def get_dataloaders_cifar10_distributed_full_validation(batch_size,
         sampler=valid_sampler,
         drop_last=True
     )
+
+    if rank == 0:
+        print("train_loader number of batches: ", len(train_loader))
+        print("valid_loader number of batches: ", len(valid_loader))
 
     return train_loader, valid_loader
