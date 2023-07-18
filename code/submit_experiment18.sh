@@ -1,9 +1,9 @@
 #!/bin/bash
 
-#SBATCH --job-name=experiment18        # job name
+#SBATCH --job-name=experiment19        # job name
 #SBATCH --partition=multiple            # queue for resource allocation
 #SBATCH --nodes=4                       # number of nodes to be used
-#SBATCH --time=02:00:00                   # wall-clock time limit
+#SBATCH --time=01:00:00                   # wall-clock time limit
 #SBATCH --mem=4000                     # memory per node
 #SBATCH --cpus-per-task=1              # number of CPUs required per MPI task
 #SBATCH --ntasks-per-node=1             # maximum count of tasks per node
@@ -18,4 +18,6 @@ module load devel/cuda/10.2
 
 source venv/bin/activate      # Activate your virtual environment.
 
-mpirun python -u dataparallel_learning/particle_swarm_opt/experiment18_average_pull_with_momentum.py
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment18_average_pull_with_momentum.py "False"
+mpirun python -u dataparallel_learning/particle_swarm_opt/experiment18_average_pull_with_momentum.py "True"
+
