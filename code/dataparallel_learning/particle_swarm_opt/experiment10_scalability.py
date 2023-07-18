@@ -35,7 +35,7 @@ if __name__ == '__main__':
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     world_size = comm.Get_size()
-    set_all_seeds(rank)
+    set_all_seeds(0)
     b = 256  # Set batch size.
     particles_per_rank = sys.argv[1]
     particles_per_rank = int(particles_per_rank)
@@ -90,6 +90,8 @@ if __name__ == '__main__':
             batch_size=b,
             shuffle=False
         )
+
+    set_all_seeds(rank)
 
     num_classes = 10
 

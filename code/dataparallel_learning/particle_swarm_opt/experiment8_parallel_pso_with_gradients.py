@@ -33,7 +33,7 @@ if __name__ == '__main__':
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     world_size = comm.Get_size()
-    set_all_seeds(rank)
+    set_all_seeds(0)
 
     print("My rank is: ", rank)
 
@@ -87,6 +87,8 @@ if __name__ == '__main__':
         )
 
     num_classes = 10
+
+    set_all_seeds(rank)
 
     image_shape = None
     # Check loaded data.

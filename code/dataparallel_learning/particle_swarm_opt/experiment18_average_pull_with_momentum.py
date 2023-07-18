@@ -39,7 +39,7 @@ if __name__ == '__main__':
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     world_size = comm.Get_size()
-    set_all_seeds(rank)
+    set_all_seeds(0)
 
     use_average_pull_momentum_string = sys.argv[1]
     use_average_pull_momentum = False
@@ -100,6 +100,8 @@ if __name__ == '__main__':
             batch_size=b,
             shuffle=False
         )
+
+    set_all_seeds(rank)
 
     num_classes = 10
 
