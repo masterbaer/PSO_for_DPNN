@@ -25,7 +25,6 @@ class PSOAveragePull:
                  rank,
                  world_size,
                  comm=MPI.COMM_WORLD,
-                 step=10,
                  init_strat="equal"):
         self.device = device
         self.comm = comm
@@ -42,7 +41,6 @@ class PSOAveragePull:
         self.average_pull_weight = torch.tensor(average_pull_weight).to(self.device)
 
         self.learning_rate = torch.tensor(learning_rate).to(self.device)
-        self.step = step
         self.max_iterations = max_iterations
         self.valid_loader = valid_loader  # for evaluation of fitness
         self.train_loader = train_loader  # for gradient calculation

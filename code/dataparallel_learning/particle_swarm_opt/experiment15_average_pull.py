@@ -105,9 +105,9 @@ if __name__ == '__main__':
     model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)  # keep in cpu
 
     pso = AveragePull(model=model, inertia_weight=0.0,
-                 average_pull_weight=average_pull_weight, max_iterations=10000, train_loader=train_loader,
+                 average_pull_weight=average_pull_weight, max_iterations=5000, train_loader=train_loader,
                  valid_loader=valid_loader, learning_rate=0.01, device=device, rank=rank, world_size=world_size,
-                 comm=comm, step=10)
+                 comm=comm, step=5)
 
     pso.optimize(evaluate=True, output1=f"experiment15_loss_{average_pull_weight}.pt",
                  output2=f"experiment15_accuracy_{average_pull_weight}.pt")

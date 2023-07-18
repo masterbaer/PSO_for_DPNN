@@ -82,6 +82,24 @@ class AveragePull:
 
         for iteration in range(self.max_iterations):
 
+            # local SGD update
+            try:
+                train_inputs, train_labels = next(train_generator)
+            except StopIteration:
+                train_generator = iter(self.train_loader)
+                train_inputs, train_labels = next(train_generator)
+            train_inputs = train_inputs.to(self.device)
+            train_labels = train_labels.to(self.device)
+
+            outputs = self.model(train_inputs)
+            loss_fn = torch.nn.CrossEntropyLoss()
+            self.model.zero_grad()
+            loss = loss_fn(outputs, train_labels)
+            loss.backward()
+
+            for param_current in self.model.parameters():
+                param_current.data.sub_(param_current.grad * self.learning_rate)
+
             if iteration % self.step == 0 and iteration != 0:
                 # synchronization via average pull
                 # see https://discuss.pytorch.org/t/average-each-weight-of-two-models/77008 for averaging two
@@ -144,24 +162,6 @@ class AveragePull:
                     #    print("new velocity: ", velocity_current.data[0][0])
                     #    print("new param: ", param_current.data[0][0])
 
-            else:
-                # local SGD update
-                try:
-                    train_inputs, train_labels = next(train_generator)
-                except StopIteration:
-                    train_generator = iter(self.train_loader)
-                    train_inputs, train_labels = next(train_generator)
-                train_inputs = train_inputs.to(self.device)
-                train_labels = train_labels.to(self.device)
-
-                outputs = self.model(train_inputs)
-                loss_fn = torch.nn.CrossEntropyLoss()
-                self.model.zero_grad()
-                loss = loss_fn(outputs, train_labels)
-                loss.backward()
-
-                for param_current in self.model.parameters():
-                    param_current.data.sub_(param_current.grad * self.learning_rate)
 
             if iteration % 20 == 0:
                 # validation accuracy on first particle

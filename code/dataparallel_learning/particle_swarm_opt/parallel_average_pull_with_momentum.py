@@ -85,6 +85,40 @@ class AveragePullMomentum:
         start_time = time.perf_counter()
         for iteration in range(self.max_iterations):
 
+            # local SGD update
+            try:
+                train_inputs, train_labels = next(train_generator)
+            except StopIteration:
+                train_generator = iter(self.train_loader)
+                train_inputs, train_labels = next(train_generator)
+            train_inputs = train_inputs.to(self.device)
+            train_labels = train_labels.to(self.device)
+
+            outputs = self.model(train_inputs)
+            loss_fn = torch.nn.CrossEntropyLoss()
+            self.model.zero_grad()
+            loss = loss_fn(outputs, train_labels)
+            loss.backward()
+
+            # update model parameters
+            for param_current in self.model.parameters():
+                param_current.data.sub_(param_current.grad * self.learning_rate)
+
+            # update momentum by adding the new gradients and subtracting the oldest values and updating the queue
+            # subtract the old values and pop them from the queue
+            old_net = self.momentum_queue.pop(0)
+            for param_momentum, param_old_value in zip(self.momentum.parameters(), old_net.parameters()):
+                param_momentum.data.sub_(param_old_value.data)
+
+            # update the old net and append it to the queue again
+            for param_old, param_current in zip(old_net.parameters(), self.model.parameters()):
+                param_old.data.copy_(param_current.grad)
+            self.momentum_queue.append(old_net)
+
+            # add the new values to the current momentum
+            for param_momentum, param_new_value in zip(self.momentum.parameters(), old_net.parameters()):
+                param_momentum.data.add_(param_new_value.data)
+
             if iteration % self.step == 0 and iteration != 0:
                 # synchronization via average pull
                 # see https://discuss.pytorch.org/t/average-each-weight-of-two-models/77008 for averaging two
@@ -139,40 +173,7 @@ class AveragePullMomentum:
                 for param, momentum in zip(self.model.parameters(), self.momentum.parameters()):
                     param.data.add_(momentum * self.momentum_coefficient)
 
-            else:
-                # local SGD update
-                try:
-                    train_inputs, train_labels = next(train_generator)
-                except StopIteration:
-                    train_generator = iter(self.train_loader)
-                    train_inputs, train_labels = next(train_generator)
-                train_inputs = train_inputs.to(self.device)
-                train_labels = train_labels.to(self.device)
 
-                outputs = self.model(train_inputs)
-                loss_fn = torch.nn.CrossEntropyLoss()
-                self.model.zero_grad()
-                loss = loss_fn(outputs, train_labels)
-                loss.backward()
-
-                # update model parameters
-                for param_current in self.model.parameters():
-                    param_current.data.sub_(param_current.grad * self.learning_rate)
-
-                # update momentum by adding the new gradients and subtracting the oldest values and updating the queue
-                # subtract the old values and pop them from the queue
-                old_net = self.momentum_queue.pop(0)
-                for param_momentum, param_old_value in zip(self.momentum.parameters(), old_net.parameters()):
-                    param_momentum.data.sub_(param_old_value.data)
-
-                # update the old net and append it to the queue again
-                for param_old, param_current in zip(old_net.parameters(), self.model.parameters()):
-                    param_old.data.copy_(param_current.grad)
-                self.momentum_queue.append(old_net)
-
-                # add the new values to the current momentum
-                for param_momentum, param_new_value in zip(self.momentum.parameters(), old_net.parameters()):
-                    param_momentum.data.add_(param_new_value.data)
 
             if iteration % 20 == 0:
                 # validation accuracy on first particle

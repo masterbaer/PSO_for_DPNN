@@ -117,7 +117,7 @@ if __name__ == '__main__':
     pso = AveragePull(model=model, inertia_weight=0.0,
                       average_pull_weight=average_pull_weight, max_iterations=int(5000 / ratio), train_loader=train_loader,
                       valid_loader=valid_loader, learning_rate=(0.01 * ratio), device=device, rank=rank, world_size=world_size,
-                      comm=comm, step=10)
+                      comm=comm, step=5)
 
     # TODO 'step' is not scaled with the batch size. Synchronization may be relevant too.
 

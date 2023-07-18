@@ -107,7 +107,7 @@ if __name__ == '__main__':
     pso = AveragePull(model=model, inertia_weight=0.0,
                  average_pull_weight=average_pull_weight, max_iterations=5000, train_loader=train_loader,
                  valid_loader=valid_loader, learning_rate=0.01, device=device, rank=rank, world_size=world_size,
-                 comm=comm, step=10,  init_strat="random")
+                 comm=comm, step=5,  init_strat="random")
 
     pso.optimize(evaluate=True, output1=f"experiment16_loss_{average_pull_weight}.pt",
                  output2=f"experiment16_accuracy_{average_pull_weight}.pt")
