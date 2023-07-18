@@ -131,7 +131,7 @@ class AveragePull:
                         print("param_current: ", param_current.data[0][0])
                         print("param_average: ", param_average.data[0][0])
                         print("social_weight: ", self.social_weight)
-                        print("velocity_current: ", self.velocity.data[0][0])
+                        print("velocity_current: ", velocity_current.data[0][0])
                         print("inertia weight: ", self.inertia_weight)
 
                     average_pull = self.social_weight * (param_average.data - param_current.data)
@@ -143,7 +143,7 @@ class AveragePull:
                     if iteration <= 15 and self.rank == 0:
                         print("after update: ")
                         print("velocity-term: ", velocity[0][0])
-                        print("velocity: ", velocity_current.data[0][0])
+                        print("new velocity: ", velocity_current.data[0][0])
                         print("new param: ", param_current.data[0][0])
 
             else:
