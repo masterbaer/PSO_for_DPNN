@@ -9,7 +9,6 @@ if __name__ == '__main__':
     accuracies_point_one = torch.load("experiment15_accuracy_0.1.pt")
     accuracies_point_zero_one = torch.load("experiment15_accuracy_0.01.pt")
     accuracies_sequential = torch.load("simple_gd_accuracy.pt")  # produced in sequential learning folder
-    accuracies_sequential = accuracies_sequential[:1000:4]  # used 10.000 iterations and measured every 5
 
     X = np.arange(0, 5000, 20)
 

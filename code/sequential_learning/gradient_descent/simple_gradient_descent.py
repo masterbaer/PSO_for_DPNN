@@ -40,7 +40,7 @@ if __name__ == '__main__':
     ############
 
     seed = 123  # Set random seed.
-    b = 256  # Set batch size.
+    b = 256 * 4  # Set batch size.
 
     # Get device used for training, e.g., check via torch.cuda.is_available().
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')  # Set device.
@@ -71,7 +71,7 @@ if __name__ == '__main__':
         num_workers=0
     )
 
-    learning_rate = 0.1
+    learning_rate = 0.01
 
     num_classes = 10
     image_shape = None
@@ -84,7 +84,7 @@ if __name__ == '__main__':
     valid_loss_list = []
     valid_accuracy_list = []
 
-    for iteration in range(10000):
+    for iteration in range(5000):
         try:
             train_inputs, train_labels = next(train_generator)
         except StopIteration:
@@ -102,7 +102,7 @@ if __name__ == '__main__':
         for param_current in model.parameters():
             param_current.data.sub_(param_current.grad * learning_rate)
 
-        if iteration % 5 == 0:
+        if iteration % 20 == 0:
             loss, accuracy = evaluate_model(model, valid_loader, device)
             valid_loss_list.append(loss)
             valid_accuracy_list.append(accuracy)
