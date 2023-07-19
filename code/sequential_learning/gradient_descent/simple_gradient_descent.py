@@ -39,7 +39,7 @@ if __name__ == '__main__':
     # SETTINGS #
     ############
 
-    seed = 123  # Set random seed.
+    seed = 0  # Set random seed.
     b = 256 * 4  # Set batch size.
 
     # Get device used for training, e.g., check via torch.cuda.is_available().
