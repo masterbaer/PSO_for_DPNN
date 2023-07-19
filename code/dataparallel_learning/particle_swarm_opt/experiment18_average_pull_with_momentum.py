@@ -123,8 +123,8 @@ if __name__ == '__main__':
                               momentum_coefficient=0.005,
                               step=5)
 
-    pso.optimize(output1=f"experiment19_loss_{use_average_pull_momentum}.pt",
-                 output2=f"experiment19_accuracy_{use_average_pull_momentum}.pt")
+    pso.optimize(output1=f"experiment18_loss_{use_average_pull_momentum}.pt",
+                 output2=f"experiment18_accuracy_{use_average_pull_momentum}.pt")
 
     if rank == 0:
         # final loss on test set
