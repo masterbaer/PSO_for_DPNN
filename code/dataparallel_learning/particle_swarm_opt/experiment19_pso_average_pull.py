@@ -108,7 +108,6 @@ if __name__ == '__main__':
 
     pso.optimize(evaluate=True, output1=f"experiment19_loss.pt",
                  output2=f"experiment19_accuracy.pt")
-    # trained_models = pso.optimize()
 
     if rank == 0:
         # final loss on test set
