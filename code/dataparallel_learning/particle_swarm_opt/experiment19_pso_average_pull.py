@@ -37,7 +37,7 @@ if __name__ == '__main__':
     rank = comm.Get_rank()
     world_size = comm.Get_size()
     set_all_seeds(0)
-    b = 256 / 4 # Set batch size.
+    b = int(256 / 4) # Set batch size.
 
     if rank == 0:
         print(f"batchsize = {b}")
