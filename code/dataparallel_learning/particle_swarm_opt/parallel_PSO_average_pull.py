@@ -3,6 +3,7 @@ In this PSO variant we try to combine the PSO-PINN approach with another average
 In each iteration, we use the average-pull component, the inertia and a local gradient.
 
 """
+# TODO make it a PSO-variant by adding the personal best and global best!
 
 import copy
 import time

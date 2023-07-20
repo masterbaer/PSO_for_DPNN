@@ -5,7 +5,7 @@ import numpy as np
 if __name__ == '__main__':
 
     accuracies = torch.load("experiment19_accuracy.pt")
-    accuracies_sequential = torch.load("simple_gd_accuracy.pt")  # produced in sequential learning folder
+    accuracies_sequential = torch.load("simple_gd_accuracy_0.1_256.pt")  # produced in sequential learning folder
 
     X = np.arange(0, 5000, 20)
     plt.plot(X, accuracies, label="pso_average_pull", color="r")
