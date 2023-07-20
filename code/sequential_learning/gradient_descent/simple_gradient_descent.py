@@ -40,7 +40,8 @@ if __name__ == '__main__':
     ############
 
     seed = 0  # Set random seed.
-    b = 256 * 4  # Set batch size.
+    #b = 256 * 4  # Set batch size.
+    b = 256
 
     # Get device used for training, e.g., check via torch.cuda.is_available().
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')  # Set device.
@@ -71,7 +72,7 @@ if __name__ == '__main__':
         num_workers=0
     )
 
-    learning_rate = 0.01
+    learning_rate = 0.1
 
     num_classes = 10
     image_shape = None
@@ -108,6 +109,6 @@ if __name__ == '__main__':
             valid_accuracy_list.append(accuracy)
             print(f"accuracy after {iteration+1} iterations: {accuracy}")
 
-    torch.save(valid_loss_list, 'simple_gd_loss.pt')
-    torch.save(valid_accuracy_list, 'simple_gd_accuracy.pt')
+    torch.save(valid_loss_list, f'simple_gd_loss_{learning_rate}_{b}.pt')
+    torch.save(valid_accuracy_list, f'simple_gd_accuracy_{learning_rate}_{b}.pt')
 

@@ -37,7 +37,7 @@ if __name__ == '__main__':
     rank = comm.Get_rank()
     world_size = comm.Get_size()
     set_all_seeds(0)
-    b = 256  # Set batch size.
+    b = 256 / 4 # Set batch size.
 
     if rank == 0:
         print(f"batchsize = {b}")
@@ -103,7 +103,7 @@ if __name__ == '__main__':
 
     pso = PSOAveragePull(model=model, inertia_weight=0.5,
                  average_pull_weight=0.1, max_iterations=5000, train_loader=train_loader,
-                 valid_loader=valid_loader, learning_rate=0.01, device=device, rank=rank, world_size=world_size,
+                 valid_loader=valid_loader, learning_rate=0.1/4, device=device, rank=rank, world_size=world_size,
                  comm=comm)
 
     pso.optimize(evaluate=True, output1=f"experiment19_loss.pt",
