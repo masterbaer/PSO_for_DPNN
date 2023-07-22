@@ -26,23 +26,27 @@ class PSOAveragePull:
                  rank,
                  world_size,
                  comm=MPI.COMM_WORLD,
-                 init_strat="equal"):
+                 init_strat="equal",
+                 social_weight=0.0,
+                 cognitive_weight=0.0):
         self.device = device
         self.comm = comm
         self.rank = rank
         self.world_size = world_size
 
-        self.model = model.to(self.device)
+        self.model = model
 
-        self.velocity = copy.deepcopy(model).to(self.device)
+        self.velocity = copy.deepcopy(model)
         for param in self.velocity.parameters():
             param.data = torch.zeros_like(param.data)
 
-        self.inertia_weight = torch.tensor(inertia_weight).to(self.device)
-        self.average_pull_weight = torch.tensor(average_pull_weight).to(self.device)
+        self.inertia_weight = torch.tensor(inertia_weight)
+        self.average_pull_weight = torch.tensor(average_pull_weight)
 
-        self.learning_rate = torch.tensor(learning_rate).to(self.device)
+        self.learning_rate = torch.tensor(learning_rate)
         self.max_iterations = max_iterations
+        self.cognitive_weight = cognitive_weight
+        self.social_weight = social_weight
         self.valid_loader = valid_loader  # for evaluation of fitness
         self.train_loader = train_loader  # for gradient calculation
 
@@ -53,6 +57,17 @@ class PSOAveragePull:
             state_dict = self.comm.bcast(self.model.state_dict(), root=0)
             self.model.load_state_dict(state_dict)
 
+        self.pbest = copy.deepcopy(self.model)
+        for param_pbest, param in zip(self.pbest.parameters(), self.model.parameters()):
+            param_pbest.data.copy_(param.data)
+
+        self.gbest = copy.deepcopy(self.model)
+        for param_gbest, param in zip(self.gbest.parameters(), self.model.parameters()):
+            param_gbest.data.copy_(param.data)
+
+        self.personal_best_loss = float("inf")
+        self.global_best_loss = float("inf")
+
     def optimize(self, evaluate=True, output1="global_loss_list.pt", output2="global_accuracy_list.pt"):
 
         train_generator = iter(self.train_loader)
@@ -62,6 +77,8 @@ class PSOAveragePull:
         start_time = time.perf_counter()
 
         for iteration in range(self.max_iterations):
+
+            decay = torch.tensor((1 - 1 / self.max_iterations) ** iteration) # linear decay
 
             # calculate the average particle
             state_dict = self.model.state_dict()
@@ -77,7 +94,6 @@ class PSOAveragePull:
                 average_model.load_state_dict(average_state_dict)
 
             # calculate the gradient
-
             try:
                 train_inputs, train_labels = next(train_generator)
             except StopIteration:
@@ -91,22 +107,53 @@ class PSOAveragePull:
             self.model.zero_grad()
             loss = loss_fn(outputs, train_labels)
             loss.backward()
+            loss_value = loss.item()
 
+            # update pbest
+            if loss_value < self.personal_best_loss:
+                self.personal_best_loss = loss_value
+                state_dict = self.model.state_dict()
+                self.pbest.load_state_dict(state_dict)
 
-            for i, (param_current, param_average, velocity_current) in enumerate(
-                    zip(self.model.parameters(), average_model.parameters(), self.velocity.parameters())):
+            # update gbest
+            found_better_gbest = False
+
+            if loss_value < self.global_best_loss:
+                self.global_best_loss = loss_value
+                found_better_gbest = True
+
+            min_value, min_rank = self.comm.allreduce((self.global_best_loss, self.rank), op=MPI.MINLOC)
+            found_better_gbest = self.comm.bcast(found_better_gbest, root=min_rank)
+
+            if found_better_gbest:
+                self.global_best_loss = self.comm.bcast(min_value, root=min_rank)
+                #global_best_accuracy = self.comm.bcast(particle_accuracy, root=min_rank)
+                global_best_model_dict = self.comm.bcast(self.model.state_dict(), root=min_rank)
+                self.gbest.load_state_dict(global_best_model_dict)
+
+            for i, (param_current, param_average, velocity_current, p_best, g_best) in enumerate(
+                    zip(self.model.parameters(), average_model.parameters(), self.velocity.parameters(),
+                        self.pbest.parameters(), self.gbest.parameters())):
 
                 average_pull = self.average_pull_weight * (param_average.data - param_current.data)
                 gradient_component = param_current.grad * self.learning_rate
 
-                velocity = velocity_current.data * self.inertia_weight + average_pull - gradient_component
+                social_component = decay * self.social_weight * torch.rand(1) * (
+                        g_best.data - param_current.data)
+
+                cognitive_component = decay * self.cognitive_weight * torch.rand(1) * (
+                        p_best.data - param_current.data)
+
+                velocity = velocity_current.data * self.inertia_weight + average_pull - gradient_component \
+                           + social_component + cognitive_component
+
                 param_current.data.add_(velocity)
                 velocity_current.data.copy_(velocity)
 
             if iteration % 20 == 0:
                 # validation accuracy on first particle
                 end_time_iteration = time.perf_counter()
-                particle_loss, particle_accuracy = evaluate_model(self.model, self.valid_loader, self.device)
+                particle_loss, particle_accuracy = evaluate_model(self.gbest, self.valid_loader, self.device)
                 valid_loss_list.append(particle_loss)
                 valid_accuracy_list.append(particle_accuracy)
 
