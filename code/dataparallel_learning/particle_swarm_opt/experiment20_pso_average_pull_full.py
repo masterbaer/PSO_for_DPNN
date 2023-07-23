@@ -106,8 +106,8 @@ if __name__ == '__main__':
                  valid_loader=valid_loader, learning_rate=0.1/4, device=device, rank=rank, world_size=world_size,
                  comm=comm, social_weight=0.05, cognitive_weight=0.05)
 
-    pso.optimize(evaluate=True, output1=f"experiment19_loss.pt",
-                 output2=f"experiment19_accuracy.pt")
+    pso.optimize(evaluate=True, output1=f"experiment20_loss.pt",
+                 output2=f"experiment20_accuracy.pt")
 
     if rank == 0:
         # final loss on test set
