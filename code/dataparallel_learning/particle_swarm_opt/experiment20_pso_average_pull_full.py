@@ -104,7 +104,7 @@ if __name__ == '__main__':
     pso = PSOAveragePull(model=model, inertia_weight=0.5,
                  average_pull_weight=0.1, max_iterations=5000, train_loader=train_loader,
                  valid_loader=valid_loader, learning_rate=0.1/4, device=device, rank=rank, world_size=world_size,
-                 comm=comm, social_weight=0.05, cognitive_weight=0.05)
+                 comm=comm, social_weight=0.05, cognitive_weight=0.05, init_strat="random")
 
     pso.optimize(evaluate=True, output1=f"experiment20_loss.pt",
                  output2=f"experiment20_accuracy.pt")
