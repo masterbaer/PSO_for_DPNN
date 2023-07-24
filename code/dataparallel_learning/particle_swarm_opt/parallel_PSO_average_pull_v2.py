@@ -51,7 +51,7 @@ class PSOAveragePullv2:
             self.model.load_state_dict(state_dict)
 
         self.current_best = copy.deepcopy(self.model)
-        for param_cbest, param in zip(self.cbest.parameters(), self.model.parameters()):
+        for param_cbest, param in zip(self.current_best.parameters(), self.model.parameters()):
             param_cbest.data.copy_(param.data)
 
         self.current_best_loss = float("inf")
