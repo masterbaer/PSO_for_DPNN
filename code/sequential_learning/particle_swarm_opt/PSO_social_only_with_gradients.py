@@ -5,11 +5,16 @@ See (https://web2.qatar.cmu.edu/~gdicaro/15382/additional/CompIntelligence-Engel
 
 Whether there is an improvement or not - we save memory by not saving the cognitive best component. Hence this
 alteration is useful regardless.
-In contrast, there is also the cognitive-only model where the social component is erased. But that leads to poor
-performance as it "tends to locally search in areas where particles are initialized".
+After several experiments (experiment 7, 20 and 21) we find that the cognitive component hinders training.
+We have two reasons for believing so. Firstly, when particles "go past" the good solutions, they might find better
+solutions when coming back from the other side. However, this is not the case when training with batches.
+A new gradient calculated from a training batch means a new (up-to-date) direction to follow.
+So the cognitive component (but also the social component) do not pull towards up-to-date directions.
+The social component at least considers the data in other particles which makes the update meaningful. The cognitive
+component does not.
 
-He also mentions an inertia decay via Linear Decreasing where "an initially large inertia weight (usually 0.9)
-is linearly decreased to a small value (usually 0.4)".
+There is also the cognitive-only model where the social component is erased. But that leads to poor
+performance as it "tends to locally search in areas where particles are initialized".
 """
 
 import copy

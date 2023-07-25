@@ -5,6 +5,9 @@ from model import *
 from mpi4py import MPI
 from helperfunctions import evaluate_position_single_batch, reset_all_weights
 
+"""
+PSO-PINN (or PSO-BP-CD) in parallel.
+"""
 
 class Particle:
 

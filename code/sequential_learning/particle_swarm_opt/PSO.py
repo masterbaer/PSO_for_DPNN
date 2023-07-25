@@ -1,3 +1,13 @@
+"""
+This is our new PSO-implementation adapted for neural network training. As mentioned in our initial attempt
+(particle_swarm_opt_initial_attmept/PSO) we change the following aspects:
+
+1) we do not flatten the weights but instead work on parameters/state_dicts
+2) we initialize particles with the default pytorch init and velocities with zero
+3) We use small batches for fitness evaluation instead of the whole dataset.
+
+"""
+
 import copy
 import time
 
@@ -6,22 +16,7 @@ from helperfunctions import evaluate_model, evaluate_position_single_batch, rese
 from torch import nn
 
 
-# Benchmark: Using normal SGD, 175 batches per epoch, ReduceLROnPlateau: factor=0.1, mode='max', verbose=True
-#                                                                            Loss: 2.3024 (on first training batch)
-# Epoch: 001/040 | Train: 0.43 | Validation: 0.41 , Time elapsed: 0.80 min , Loss: 1.7122
-# Epoch: 002/040 | Train: 0.47 | Validation: 0.44 , Time elapsed: 1.64 min
-# Epoch: 003/040 | Train: 0.50 | Validation: 0.48  , Time elapsed: 2.45 min
-# Epoch: 004/040 | Train: 0.53 | Validation: 0.49, Time elapsed: 3.29 min
-# Epoch: 005/040 | Train: 0.54 | Validation: 0.50, Time elapsed: 4.11 min
-# Epoch: 006/040 | Train: 0.56 | Validation: 0.51 , Time elapsed: 4.91 min
-# Epoch: 007/040 | Train: 0.58 | Validation: 0.52 , Time elapsed: 5.71 min
-# Epoch: 008/040 | Train: 0.59 | Validation: 0.53 , Time elapsed: 6.51 min
-# Epoch: 011/040 | Train: 0.62 | Validation: 0.54 , Time elapsed: 8.83 min , Loss 1.1689
-# Epoch: 014/040 | Train: 0.64 | Validation: 0.55 , Time elapsed: 11.23 min, Loss: 1.2129
-# Epoch: 017/040 | Train: 0.68 | Validation: 0.56 , Time elapsed: 13.59 min, Loss: 1.1200
-# Epoch: 020/040 | Train: 0.70 | Validation: 0.57 , Time elapsed: 15.93 min , Loss: 1.0405
-# Epoch: 031/040 | Train: 0.77 | Validation: 0.57, Time elapsed: 24.45 min , Loss: 0.7542
-# Epoch: 040/040 | Train: 0.82 | Validation: 0.57, Time elapsed: 31.52 min , Loss: 0.4544 (test accuracy 57%)
+
 
 class Particle:
 

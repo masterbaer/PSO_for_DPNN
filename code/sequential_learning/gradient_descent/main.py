@@ -9,6 +9,12 @@ from helper_train import train_model
 import result_plotter
 from sequential_learning.gradient_descent.model import NeuralNetwork
 
+"""
+We use gradient descent with a batch size of 256 and learning rate of 0.01. 
+Using a learning rate scheduler (ReduceLROnPlateau) leads to the same validation accuracy of 57% as not using one
+but it increases the training accuracy (which is not useful).
+"""
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 

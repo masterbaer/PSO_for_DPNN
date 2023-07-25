@@ -7,13 +7,16 @@ from model import *
 from torch import nn
 from helperfunctions import evaluate_position_single_batch, reset_all_weights
 
+"""
+ This optimizer is from PSO-PINN. https://arxiv.org/pdf/2202.01943.pdf
+ The gradient is used as another velocity component and the social and cognitivce coefficients
+ decay linearly (the recursive formulation is linear, the explicit formulation is exponential. 
+ The decay converges to 1/e.)
 
-# This optimizer is from PSO-PINN. https://arxiv.org/pdf/2202.01943.pdf
-# The gradient is used as another velocity component and the social and cognitivce coefficients
-# decay with 1/n where n is the number of iterations.
+ At some point, this almost becomes normal SGD with many neural networks training independently as the social/cognitive
+ components get smaller. 
+"""
 
-# In contrast to the paper we also let the inertia decay since otherwise the loss explodes (with given inertia).
-# At some point, however, this becomes normal SGD with many neural networks in parallel.
 
 class Particle:
 

@@ -7,6 +7,12 @@ from model import *
 from mpi4py import MPI
 from helperfunctions import evaluate_position_single_batch, reset_all_weights, evaluate_model
 
+"""
+We delete the cognitive component again, replace the global best particle with the "current" best particle
+and increase the social weight so that all particles are both
+a) pulled towards the average
+b) pulled towards the current best particle.
+"""
 
 class PSOAveragePullv2:
     def __init__(self,

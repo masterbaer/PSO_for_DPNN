@@ -1,10 +1,25 @@
+"""
+This is our first implementation of standard PSO. We flatten the neural network weights (with extract_weights())
+and apply PSO on it. Also, we try to visualize the particles using Principle Component Analysis (PCA) which unfortunately
+does not help understand the relevant properties of the loss landscape. For PCA to work, we only use the initial
+particle distribution to fit pca and only transform later iterations (similar to
+https://arxiv.org/abs/2210.00286). This saves a lot of memory and makes the visualization possible.
+
+After trying out PSO, we make some changes to adapt it to neural network training (in the "particle swarm op - folder").
+Firstly, we do not have to flatten the weights and can directly work on the parameters/state_dicts.
+Secondly, visualization does not help understand things so we drop PCA.
+Thirdly, initializing the particles completely randomly leads to bad initializations and
+initializing the particle velocities randomly in [-1,1] can lead to divergence when also using large inertia values.
+Hence we use the Kaiming He initialization (default in pytorch) for particle positions and zero initialization for
+velocities.
+Lastly, the evaluation using the full dataset is not efficient as the PSO-updates themselves are really fast. The main
+computation cost is the fitness evaluation. Thus, we use only small batches to evaluate the fitness.
+However, even with small fixed dataset for fitness evaluation, PSO fails to train.
+"""
+
 import numpy as np
 import torch
 from sklearn.decomposition import IncrementalPCA, PCA
-
-
-# Adapted from the torch-pso implementation
-# See https://github.com/qthequartermasterman/torch_pso/blob/master/torch_pso/optim/ParticleSwarmOptimizer.py
 
 def extract_weights(model):
     weights = []

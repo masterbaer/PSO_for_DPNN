@@ -5,18 +5,16 @@ from model import *
 from helperfunctions import reset_all_weights, evaluate_position_single_batch
 
 
-# This optimizer is from PSO-PINN. https://arxiv.org/pdf/2202.01943.pdf
-# The gradient is used as another velocity component and the social and cognitive coefficients
-# decay with 1/n where n is the number of iterations.
-
-# In contrast to the paper we also let the inertia decay since otherwise the loss explodes (with given inertia).
-# At some point, however, this becomes normal SGD with many neural networks in parallel.
-
-# To run the different variants, change "decay" in the code.
-
-
-# The particle evaluation is similar to the validation process.
-# see "Per-Epoch Activity" https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
+"""
+We try to modify PSO_BP_CD  (= PSO-PINN: https://arxiv.org/pdf/2202.01943.pdf) by trying different decay factors 
+used on the social and cognitive components. Instead of using a linear decay, we also try a decay of
+1) 1/n (goes to 0 instead of 1/e)
+2) 1/logn (goes to 0 a little slower)
+3) 1/logn - 1/logN (goes to 0 and reaches 0 at the last iteration).
+4) 0
+We find that the faster the decay goes to zero, the better the optimizer gets (both in terms of accuracy and convergence
+speed). This result practically says "do not use PSO-components". 
+"""
 
 class Particle:
 

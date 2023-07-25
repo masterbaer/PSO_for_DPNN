@@ -1,5 +1,6 @@
 """
-In this PSO variant we try to combine the PSO-PINN approach with another average-pull component.
+We try to approach synchronous SGD by using the average as another component.
+In this PSO variant we combine the PSO-PINN approach with an average-pull component.
 In each iteration, we use the average-pull component, the inertia and a local gradient.
 
 """

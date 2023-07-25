@@ -44,17 +44,6 @@ def train_model(model, num_epochs, train_loader,
                 # loss.backward() # no backward pass used
                 return loss
 
-            # TODO: Check the time needed for one optimizer step and for one single particle step and compare it to
-            #  Gradient Descent.
-
-            # TODO: Try out mixing gradient infos with initial velocities / every k steps / ... .
-
-            # TODO: Try out other variants of the algorithm.
-
-            # TODO: Learning Rate Scheduler? Is there a need for the validation set here?
-
-            # TODO: Visualise the particles.
-
             loss = optimizer.step(closure)  # The loss of the best particle AFTER every particle took one step.
             # Needs num_particles + 1 forward passes.
 

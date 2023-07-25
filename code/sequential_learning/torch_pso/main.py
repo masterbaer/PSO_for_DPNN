@@ -1,6 +1,10 @@
-###########
-# IMPORTS #
-###########
+"""
+This is our first try to use Particle Swarm Optimization (PSO) on neural network training.
+We found a project called torch-pso (https://pypi.org/project/torch-pso/) which we simply use here.
+We have do define a loss function (called closure()). We set it to the loss of the next batch.
+Every time the loss is evaluated, a new batch is used to do so.
+"""
+
 
 import torch
 import torchvision

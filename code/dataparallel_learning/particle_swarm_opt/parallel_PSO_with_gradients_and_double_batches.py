@@ -5,6 +5,12 @@ from model import *
 from mpi4py import MPI
 from helperfunctions import evaluate_position_single_batch, reset_all_weights
 
+"""
+The global best particle is calculated using small batches that are different for different particles.
+To avoid a possible overestimation, we evaluate the fitness twice and assign the worse (higher) loss.
+However, no visible improvement can be seen.
+"""
+
 class Particle:
 
     def __init__(self, model):

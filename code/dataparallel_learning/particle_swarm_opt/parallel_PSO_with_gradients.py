@@ -5,6 +5,13 @@ from model import *
 from mpi4py import MPI
 from helperfunctions import evaluate_position_single_batch, reset_all_weights
 
+"""
+Parallel implementation of PSO with the gradient as another component. The samples are partitioned and distributed 
+accordingly. The only necessary communication afterwards is the exchange of the global best particle. For this, we 
+locally set found_better_gbest to True upon improvement. We find the particle with the smalles loss (allreduce for
+the loss) and broadcast found_better_gbest from the best rank. If there was an improvement, every rank has it set to
+True. In that case, we broadcast gbest. 
+"""
 
 class Particle:
 

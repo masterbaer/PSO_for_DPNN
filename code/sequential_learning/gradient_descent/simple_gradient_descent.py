@@ -9,6 +9,10 @@ from helper_train import train_model
 import result_plotter
 from sequential_learning.gradient_descent.model import NeuralNetwork
 
+"""
+For reference we run gradient descent with a learning rate of 0.1 and a batchsize of 256.
+We can reach a validation/test accuracy of about 56%.  
+"""
 
 def evaluate_model(model, data_loader, device):
     model = model.to(device)

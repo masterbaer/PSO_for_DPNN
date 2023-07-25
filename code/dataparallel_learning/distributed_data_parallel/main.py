@@ -9,6 +9,12 @@ from dataloader import get_dataloaders_cifar10_ddp, set_all_seeds
 from helper_train import train_model_ddp
 from helper_evaluation import compute_accuracy_ddp
 
+"""
+We took the code from the Scalable-AI exercise to compare the parallel PSO (using mpi4py) with parallel SGD training
+(using distributed data parallel).
+But this was not necessary as neither PSO-variant (PSO-PINN, PSO-PS, or using a pull towards the average) could compete
+with simple model averaging.
+"""
 
 def main():
     world_size = int(os.getenv("SLURM_NPROCS"))  # Get overall number of processes.
