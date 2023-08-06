@@ -1,16 +1,8 @@
-###########
-# IMPORTS #
-###########
-
 import torch
 import torchvision
 from dataloader import get_dataloaders_cifar10, set_all_seeds
-from sequential_learning.gradient_descent.model import NeuralNetwork
+from sequential_learning.pruning.model import NeuralNetwork
 
-"""
-For reference we run gradient descent with a learning rate of 0.1 and a batchsize of 256.
-We can reach a validation/test accuracy of about 56%.  
-"""
 
 def evaluate_model(model, data_loader, device):
     model = model.to(device)
@@ -34,28 +26,15 @@ def evaluate_model(model, data_loader, device):
     accuracy = (correct_pred.float() / num_examples).item()
     return loss_per_batch, accuracy
 
-# Press the green button in the gutter to run the script.
+
 if __name__ == '__main__':
 
-    ############
-    # SETTINGS #
-    ############
-
-    seed = 0  # Set random seed.
-    #b = 256 * 4  # Set batch size.
+    seed = 0
     b = 256
-
-    # Get device used for training, e.g., check via torch.cuda.is_available().
+    e = 40
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')  # Set device.
     print(f'Using {device} device.')
     set_all_seeds(seed)  # Set all seeds to chosen random seed.
-
-    ###########
-    # DATASET #
-    ###########
-
-    # Using transforms on your data allows you to transform it from its
-    # source state so that it is ready for training/validation/testing.
 
     cifar_10_transforms = torchvision.transforms.Compose([
         torchvision.transforms.Resize((70, 70)),
@@ -74,43 +53,45 @@ if __name__ == '__main__':
         num_workers=0
     )
 
-    learning_rate = 0.1
+    learning_rate = 0.01
 
     num_classes = 10
     image_shape = None
     for images, labels in train_loader:
         image_shape = images.shape
         break
-    model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes).to(device)
 
-    train_generator = iter(train_loader)
+    model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes).to(device)
+    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, mode='max', verbose=True)
+
     valid_loss_list = []
     valid_accuracy_list = []
 
-    for iteration in range(5000):
-        try:
-            train_inputs, train_labels = next(train_generator)
-        except StopIteration:
-            train_generator = iter(train_loader)
-            train_inputs, train_labels = next(train_generator)
-        train_inputs = train_inputs.to(device)
-        train_labels = train_labels.to(device)
+    for epoch in range(e):
 
-        outputs = model(train_inputs)
-        loss_fn = torch.nn.CrossEntropyLoss()
-        model.zero_grad()
-        loss = loss_fn(outputs, train_labels)
-        loss.backward()
+        model.train()
+        for i, (inputs, labels) in enumerate(train_loader):
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+            optimizer.zero_grad()
+            outputs = model(inputs)
+            loss_fn = torch.nn.CrossEntropyLoss()
+            loss = loss_fn(outputs, labels)
+            loss.backward()
+            optimizer.step()
 
-        for param_current in model.parameters():
-            param_current.data.sub_(param_current.grad * learning_rate)
+        model.eval()
 
-        if iteration % 20 == 0:
-            loss, accuracy = evaluate_model(model, valid_loader, device)
-            valid_loss_list.append(loss)
-            valid_accuracy_list.append(accuracy)
-            print(f"accuracy after {iteration+1} iterations: {accuracy}")
+        valid_loss, valid_accuracy = evaluate_model(model, valid_loader, device)
+        print(f"validation accuracy after {epoch+1} epochs: {valid_accuracy}")
 
-    torch.save(valid_loss_list, f'simple_gd_loss_{learning_rate}_{b}.pt')
-    torch.save(valid_accuracy_list, f'simple_gd_accuracy_{learning_rate}_{b}.pt')
+        valid_loss_list.append(valid_loss)
+        valid_accuracy_list.append(valid_accuracy)
 
+        scheduler.step(valid_accuracy_list[-1])
+
+    torch.save(model.state_dict(), f"simple_model_{seed}.pt")
+
+    torch.save(valid_loss_list, f'simple_gd_loss_{seed}.pt')
+    torch.save(valid_accuracy_list, f'simple_gd_accuracy_{seed}.pt')
