@@ -6,8 +6,8 @@ import torchvision
 from torch.nn.utils import prune
 import torch_pruning as tp
 
-from sequential_learning.pruning.dataloader import set_all_seeds, get_dataloaders_cifar10
-from sequential_learning.pruning.model import NeuralNetwork, CombinedNeuralNetwork
+from sequential_learning.pruning_playground.dataloader import set_all_seeds, get_dataloaders_cifar10
+from sequential_learning.pruning_playground.model import NeuralNetwork, CombinedNeuralNetwork
 
 # we try pytorch's pruning in this file
 # for pruning with a threshhold see
@@ -323,8 +323,67 @@ if __name__ == '__main__':
 
 
 
+    # finetune the model
 
+    learning_rate = 0.01
+    optimizer = torch.optim.SGD(combined_model.parameters(), lr=learning_rate, momentum=0.9)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, mode='max', verbose=True)
+
+    valid_loss_list = []
+    valid_accuracy_list = []
+
+    for epoch in range(e):
+
+        combined_model.train()
+        for i, (inputs, labels) in enumerate(train_loader):
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+            optimizer.zero_grad()
+            outputs = combined_model(inputs)
+            loss_fn = torch.nn.CrossEntropyLoss()
+            loss = loss_fn(outputs, labels)
+            loss.backward()
+            optimizer.step()
+
+        combined_model.eval()
+
+        valid_loss, valid_accuracy = evaluate_model(combined_model, valid_loader, device)
+        print(f"validation accuracy after {epoch+1} epochs: {valid_accuracy}")
+
+        valid_loss_list.append(valid_loss)
+        valid_accuracy_list.append(valid_accuracy)
+
+        scheduler.step(valid_accuracy_list[-1])
+
+    combined_model.eval()
+    _, accuracy_combined = evaluate_model(combined_model, test_loader, device)
+    print("accuracy_combined")
+
+
+    for i, layer in enumerate(combined_model.modules()):
+        number_of_zeros = 0
+        number_of_params = 0
+
+        # number_of_zero_neurons = 0
+        # number_of_neurons = 0
+        if isinstance(layer, torch.nn.Linear):
+            #print(dict(layer.named_buffers())["weight_mask"].shape)
+            #print(list(layer.named_buffers()))
+            #continue
+            # print(i, layer)
+
+            for param in layer.parameters():
+                print(param.shape)
+                # count number of zeros
+                # https://discuss.pytorch.org/t/how-to-count-the-number-of-zero-weights-in-a-pytorch-model/13549/2
+                number_of_zeros += param.numel() - param.nonzero().size(0)
+                number_of_params += param.numel()
+
+            print(f"{number_of_zeros} / {number_of_params} are zero")
+
+
+    # TODO lower scheduler time and increase number of epochs for training to see if convergence happened on local models
     # TODO remove the pruned neurons from the big model (beware, pytorch does not prune the biases in ln_structured)
-    # only the incoming weights are set to 0 (or masked)
+    # only the incoming weights are set to 0 (or masked). The outgoing weights and the biases are untouched.
 
     # TODO: Compare Output Averaging vs. this approach when finetuning

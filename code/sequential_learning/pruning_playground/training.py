@@ -1,7 +1,7 @@
 import torch
 import torchvision
 from dataloader import get_dataloaders_cifar10, set_all_seeds
-from sequential_learning.pruning.model import NeuralNetwork
+from sequential_learning.pruning_playground.model import NeuralNetwork
 
 
 def evaluate_model(model, data_loader, device):
