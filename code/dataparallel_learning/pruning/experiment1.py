@@ -13,8 +13,8 @@ from mpi4py import MPI
 import torch
 import torchvision
 
-from dataparallel_learning.pruning.dataloader import set_all_seeds, get_dataloaders_cifar10
-from dataparallel_learning.pruning.model import NeuralNetwork, CombinedNeuralNetwork
+from dataloader import set_all_seeds, get_dataloaders_cifar10
+from model import NeuralNetwork, CombinedNeuralNetwork
 
 
 # we try pytorch's pruning in this file
