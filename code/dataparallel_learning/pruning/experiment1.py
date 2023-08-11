@@ -53,7 +53,7 @@ if __name__ == '__main__':
     set_all_seeds(seed)
 
     b = 256
-    e = 80
+    e = 60
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')  # Set device.
     set_all_seeds(seed)  # Set all seeds to chosen random seed.
