@@ -225,6 +225,6 @@ if __name__ == '__main__':
 
     if rank == 0:
         torch.save(combined_scratch_test_accuracy_list, 'ex1_combined_scratch_test_accuracy.pt')
-        torch.save(combined_scratch_test_accuracy_list, 'ex1_combined_test_accuracy.pt')
+        torch.save(combined_test_accuracy_list, 'ex1_combined_test_accuracy.pt')
         torch.save(combined_model.state_dict(), "ex1_combined_model.pt")
         torch.save(combined_model_scratch.state_dict(), "ex1_combined_model_scratch.pt")
