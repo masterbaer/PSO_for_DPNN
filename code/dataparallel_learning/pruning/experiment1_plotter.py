@@ -19,6 +19,7 @@ if __name__ == '__main__':
     plt.plot(accuracies_combined_scratch, label="big model from scratch")
 
     plt.legend()
+    plt.xlabel("epochs")
     plt.ylabel("accuracies")
     plt.savefig("ex1_accuracies.png")
     plt.cla()
