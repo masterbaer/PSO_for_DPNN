@@ -3,8 +3,6 @@
 Do not apply pruning yet. First we want to have a look at ensembles.
 1)  We compare the model-performance to the aggregated-model performance (both trained from scratch and combined).
 
-2) TODO another file:  We then finetune the aggregated models to see if there is an improvement.
-
 """
 
 import copy
