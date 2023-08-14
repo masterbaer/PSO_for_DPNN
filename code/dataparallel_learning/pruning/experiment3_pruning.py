@@ -118,6 +118,7 @@ if __name__ == '__main__':
     print("------")
 
     # do pruning here
+    # see https://github.com/VainF/Torch-Pruning/wiki/4.-High%E2%80%90level-Pruners
     imp = tp.importance.MagnitudeImportance(p=2)
     pruner = tp.pruner.MagnitudePruner(
         model0,
