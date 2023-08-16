@@ -9,9 +9,6 @@ from matplotlib import pyplot as plt
 from dataloader import set_all_seeds, get_dataloaders_cifar10
 from model import NeuralNetwork, CombinedNeuralNetwork
 
-# TODO make experiment with regards to give sparsities!
-# create list sparsities = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-
 def get_number_of_zero_params(model):
     number_of_zeros = 0
     number_of_params = 0

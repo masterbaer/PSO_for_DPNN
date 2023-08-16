@@ -48,6 +48,23 @@ class CombinedNeuralNetwork(nn.Module):
         x = self.fc4(x)
         return x
 
+class AdaptiveCombinedNeuralNetwork(nn.Module):
+    def __init__(self, input_dim, output_dim, hidden1, hidden2, hidden3):
+        super().__init__()
+        self.flatten = nn.Flatten()
+        self.fc1 = nn.Linear(input_dim, hidden1)
+        self.fc2 = nn.Linear(hidden1, hidden2)
+        self.fc3 = nn.Linear(hidden2, hidden3)
+        self.fc4 = nn.Linear(hidden3, output_dim)
+
+    def forward(self, x):
+        x = self.flatten(x)
+        x = nn.functional.relu(self.fc1(x))
+        x = nn.functional.relu(self.fc2(x))
+        x = nn.functional.relu(self.fc3(x))
+        x = self.fc4(x)
+        return x
+
 class AlexNet(nn.Module):
     def __init__(self, num_classes=10, dropout=0.5):
         super().__init__()
