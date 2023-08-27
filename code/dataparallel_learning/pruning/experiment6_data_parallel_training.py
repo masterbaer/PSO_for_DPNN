@@ -58,14 +58,31 @@ if __name__ == '__main__':
     ])
 
     # GET PYTORCH DATALOADERS FOR TRAINING, TESTING, AND VALIDATION DATASET.
-    train_loader, valid_loader, test_loader = get_dataloaders_cifar10_distributed(
+    train_loader, valid_loader = get_dataloaders_cifar10_distributed(
         batch_size=b,
         root="../../data",
         validation_fraction=0.1,
         train_transforms=cifar_10_transforms,
         test_transforms=cifar_10_transforms,
-        num_workers=0, world_size=world_size, rank=rank
+        num_workers=0,
+        world_size=world_size,
+        rank=rank
     )
+
+    test_dataset = torchvision.datasets.CIFAR10(
+            root='../../data',
+            train=False,
+            transform=cifar_10_transforms,
+            download=True
+        )
+
+    test_loader = torch.utils.data.DataLoader(
+            dataset=test_dataset,
+            batch_size=b,
+            shuffle=False
+        )
+
+
 
     learning_rate = 0.01
 
