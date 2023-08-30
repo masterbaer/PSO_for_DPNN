@@ -1,9 +1,9 @@
 #!/bin/bash
 
-#SBATCH --job-name=pruning_experiment6        # job name
+#SBATCH --job-name=pruning_experiment9        # job name
 #SBATCH --partition=multiple            # queue for resource allocation
 #SBATCH --nodes=4                       # number of nodes to be used
-#SBATCH --time=03:00:00                   # wall-clock time limit
+#SBATCH --time=02:00:00                   # wall-clock time limit
 #SBATCH --mem=4000                     # memory per node
 #SBATCH --cpus-per-task=1              # number of CPUs required per MPI task
 #SBATCH --ntasks-per-node=1             # maximum count of tasks per node
@@ -18,4 +18,7 @@ module load devel/cuda/10.2
 
 source venv/bin/activate      # Activate your virtual environment.
 
-mpirun python -u dataparallel_learning/pruning/experiment6_data_parallel_training.py
+mpirun python -u dataparallel_learning/pruning/experiment9_ensemble_pruning_other_architectures.py 1 128
+mpirun python -u dataparallel_learning/pruning/experiment9_ensemble_pruning_other_architectures.py 5 512
+mpirun python -u dataparallel_learning/pruning/experiment9_ensemble_pruning_other_architectures.py 7 64
+

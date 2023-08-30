@@ -12,13 +12,13 @@ class NeuralNetwork(nn.Module):
         self.fc3 = nn.Linear(512, 512)
         self.fc4 = nn.Linear(512, output_dim)
 
-        #self.linear_relu_stack = nn.Sequential(
+        # self.linear_relu_stack = nn.Sequential(
         #    nn.Linear(input_dim, 512),
         #    nn.ReLU(),
         #    nn.Linear(512, 512),
         #    nn.ReLU(),
         #    nn.Linear(512, output_dim),
-        #)
+        # )
 
     def forward(self, x):
         x = self.flatten(x)
@@ -27,17 +27,18 @@ class NeuralNetwork(nn.Module):
         x = nn.functional.relu(self.fc3(x))
         x = self.fc4(x)
 
-        #logits = self.linear_relu_stack(x)
-        return x #logits
+        # logits = self.linear_relu_stack(x)
+        return x  # logits
+
 
 class CombinedNeuralNetwork(nn.Module):
     def __init__(self, input_dim, output_dim):
         super().__init__()
         self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(input_dim, 512*4)
-        self.fc2 = nn.Linear(512*4, 512*4)
-        self.fc3 = nn.Linear(512*4, 512*4)
-        self.fc4 = nn.Linear(512*4, output_dim)
+        self.fc1 = nn.Linear(input_dim, 512 * 4)
+        self.fc2 = nn.Linear(512 * 4, 512 * 4)
+        self.fc3 = nn.Linear(512 * 4, 512 * 4)
+        self.fc4 = nn.Linear(512 * 4, output_dim)
         # divide fc outputs by 4 when creating the model
 
     def forward(self, x):
@@ -47,6 +48,7 @@ class CombinedNeuralNetwork(nn.Module):
         x = nn.functional.relu(self.fc3(x))
         x = self.fc4(x)
         return x
+
 
 class AdaptiveCombinedNeuralNetwork(nn.Module):
     def __init__(self, input_dim, output_dim, hidden1, hidden2, hidden3):
@@ -64,6 +66,8 @@ class AdaptiveCombinedNeuralNetwork(nn.Module):
         x = nn.functional.relu(self.fc3(x))
         x = self.fc4(x)
         return x
+
+
 
 class AlexNet(nn.Module):
     def __init__(self, num_classes=10, dropout=0.5):
