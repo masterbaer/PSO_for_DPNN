@@ -91,7 +91,7 @@ class PSOAveragePull:
                 value = state_dict[key]  # value to average
                 summed_value = self.comm.allreduce(value, op=MPI.SUM)
                 average_state_dict[key] = summed_value / self.world_size
-                average_model.load_state_dict(average_state_dict)
+            average_model.load_state_dict(average_state_dict)
 
             # calculate the gradient
             try:

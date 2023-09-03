@@ -108,6 +108,7 @@ if __name__ == '__main__':
     b = 64 # batch size per rank
     e = 60
     sync_frequency = 50  # how many batches until sync is required
+    finetune_length = 10 # number of batches to finetune the combined model locally
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')  # Set device.
 
@@ -182,55 +183,70 @@ if __name__ == '__main__':
             loss.backward()
             optimizer.step()
 
-        if batch_num % sync_frequency == 0:
-            #  synchronize using ensemble-pruning
+            if batch_num % sync_frequency == 0:
+                #  synchronize using ensemble-pruning
 
-            # prune locally
+                # prune locally
 
-            sparsity = 0.75
-            imp = tp.importance.MagnitudeImportance(p=2)
-            pruner = tp.pruner.MagnitudePruner(
-                model,
-                example_inputs,
-                importance=imp,
-                ch_sparsity=sparsity,
-                root_module_types=[torch.nn.Linear],
-                ignored_layers=[model.fc4],
-            )
-            pruner.step()
+                sparsity = 0.75
+                imp = tp.importance.MagnitudeImportance(p=2)
+                pruner = tp.pruner.MagnitudePruner(
+                    model,
+                    example_inputs,
+                    importance=imp,
+                    ch_sparsity=sparsity,
+                    root_module_types=[torch.nn.Linear],
+                    ignored_layers=[model.fc4],
+                )
+                pruner.step()
 
 
-            state_dict = model.state_dict()
-            state_dict = comm.gather(state_dict, root=0)
+                state_dict = model.state_dict()
+                state_dict = comm.gather(state_dict, root=0)
 
-            # combine
-            combined_state_dict = None
+                # combine
+                combined_state_dict = None
 
-            if rank == 0:
-                # build the combined model
-                combined_model = CombinedNeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3],
-                                                       num_classes).to(device)
-                for param in combined_model.parameters():
-                    param.data = torch.zeros_like(param.data)
+                if rank == 0:
+                    # build the combined model
+                    combined_model = CombinedNeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3],
+                                                           num_classes).to(device)
+                    for param in combined_model.parameters():
+                        param.data = torch.zeros_like(param.data)
 
-                model0 = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)
-                model1 = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)
-                model2 = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)
-                model3 = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)
-                model0.load_state_dict(state_dict[0])
-                model1.load_state_dict(state_dict[1])
-                model2.load_state_dict(state_dict[2])
-                model3.load_state_dict(state_dict[3])
+                    model0 = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)
+                    model1 = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)
+                    model2 = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)
+                    model3 = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)
+                    model0.load_state_dict(state_dict[0])
+                    model1.load_state_dict(state_dict[1])
+                    model2.load_state_dict(state_dict[2])
+                    model3.load_state_dict(state_dict[3])
 
-                combine_models(model0, model1, model2, model3, combined_model, first_layer_name="fc1",
-                               last_layer_name="fc4")
-                combined_state_dict = combined_model.state_dict()
+                    combine_models(model0, model1, model2, model3, combined_model, first_layer_name="fc1",
+                                   last_layer_name="fc4")
+                    combined_state_dict = combined_model.state_dict()
 
-            # distribute the combined model state dict
-            combined_state_dict = comm.bcast(combined_state_dict, root=0)
+                # distribute the combined model state dict
+                combined_state_dict = comm.bcast(combined_state_dict, root=0)
 
-            # load the combined state dict
-            model.load_state_dict(combined_state_dict)
+                # load the combined state dict
+                model.load_state_dict(combined_state_dict)
+
+                # finetune the new model
+
+                for fine_tune_batch in range(finetune_length):
+
+                    fine_tune_inputs, fine_tune_labels = next(iter(train_loader))
+                    finetune_inputs = fine_tune_inputs.to(device)
+                    fine_tune_labels = fine_tune_labels.to(device)
+
+                    optimizer.zero_grad()
+                    fine_tune_outputs = model(fine_tune_inputs)
+                    loss_fn = torch.nn.CrossEntropyLoss()
+                    fine_tune_loss = loss_fn(fine_tune_outputs, fine_tune_labels)
+                    fine_tune_loss.backward()
+                    optimizer.step()
 
 
         model.eval()
