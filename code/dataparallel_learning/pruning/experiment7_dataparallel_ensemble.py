@@ -8,6 +8,7 @@ They synchronize every 4000 batches for cifar-10 (instead of every 16 batches fo
 We expect the accuracy to drop at each synchronization step as it does after pruning without finetuning.
 
 """
+import copy
 import time
 
 from mpi4py import MPI
@@ -187,21 +188,22 @@ if __name__ == '__main__':
                 #  synchronize using ensemble-pruning
 
                 # prune locally
+                pruned_model = copy.deepcopy(model)
 
                 sparsity = 0.75
                 imp = tp.importance.MagnitudeImportance(p=2)
                 pruner = tp.pruner.MagnitudePruner(
-                    model,
+                    pruned_model,
                     example_inputs,
                     importance=imp,
                     ch_sparsity=sparsity,
                     root_module_types=[torch.nn.Linear],
-                    ignored_layers=[model.fc2],
+                    ignored_layers=[pruned_model.fc2],
                 )
                 pruner.step()
 
 
-                state_dict = model.state_dict()
+                state_dict = pruned_model.state_dict()
                 state_dict = comm.gather(state_dict, root=0)
 
                 # combine
