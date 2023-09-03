@@ -7,14 +7,13 @@ They synchronize every 4000 batches for cifar-10 (instead of every 16 batches fo
 
 We expect the accuracy to drop at each synchronization step as it does after pruning without finetuning.
 
-TODO: measure the time used and compare it as well
-
 """
 import time
 
 from mpi4py import MPI
 import torch
 import torchvision
+import torch_pruning as tp
 
 from dataloader import set_all_seeds, get_dataloaders_cifar10, get_dataloaders_cifar10_distributed
 from model import NeuralNetwork, CombinedNeuralNetwork
@@ -108,7 +107,7 @@ if __name__ == '__main__':
 
     b = 64 # batch size per rank
     e = 60
-    sync_frequency_per_batch = 50
+    sync_frequency = 50  # how many batches until sync is required
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')  # Set device.
 
@@ -150,7 +149,10 @@ if __name__ == '__main__':
 
     num_classes = 10
     image_shape = None
+    # take first image as example input for torch-pruning
+    example_inputs = None
     for images, labels in train_loader:
+        example_inputs = images
         image_shape = images.shape
         break
 
@@ -180,12 +182,22 @@ if __name__ == '__main__':
             loss.backward()
             optimizer.step()
 
-        if batch_num % sync_frequency_per_batch == 0:
+        if batch_num % sync_frequency == 0:
             #  synchronize using ensemble-pruning
 
             # prune locally
 
-            # TODO prune
+            sparsity = 0.75
+            imp = tp.importance.MagnitudeImportance(p=2)
+            pruner = tp.pruner.MagnitudePruner(
+                model,
+                example_inputs,
+                importance=imp,
+                ch_sparsity=sparsity,
+                root_module_types=[torch.nn.Linear],
+                ignored_layers=[model.fc4],
+            )
+            pruner.step()
 
 
             state_dict = model.state_dict()
