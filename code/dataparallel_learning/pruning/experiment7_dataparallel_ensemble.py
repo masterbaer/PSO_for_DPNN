@@ -16,7 +16,7 @@ import torchvision
 import torch_pruning as tp
 
 from dataloader import set_all_seeds, get_dataloaders_cifar10, get_dataloaders_cifar10_distributed
-from model import NeuralNetwork, CombinedNeuralNetwork
+from model import NeuralNetwork
 
 def combine_models(model0, model1, model2, model3, combined_model, first_layer_name, last_layer_name):
     for (l0_name, l0), (l1_name, l1), (l2_name, l2), (l3_name, l3), (l_combined_name, l_combined) in zip(
@@ -209,7 +209,7 @@ if __name__ == '__main__':
 
                 if rank == 0:
                     # build the combined model
-                    combined_model = CombinedNeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3],
+                    combined_model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3],
                                                            num_classes).to(device)
                     for param in combined_model.parameters():
                         param.data = torch.zeros_like(param.data)
