@@ -67,7 +67,26 @@ class AdaptiveCombinedNeuralNetwork(nn.Module):
         x = self.fc4(x)
         return x
 
+class NN_Linear(nn.Module):
+    def __init__(self, input_dim, output_dim, hidden_size, hidden_number):
+        super().__init__()
 
+        self.flatten = nn.Flatten()
+        self.fc1 = nn.Linear(input_dim, hidden_size)
+        self.layers = nn.ModuleList()
+        for i in range(hidden_number - 1):
+            self.layers.append(nn.Linear(hidden_size, hidden_size))
+        self.fc2 = nn.Linear(hidden_size, output_dim)
+
+    def forward(self, x):
+        x = self.flatten(x)
+        x = nn.functional.relu(self.fc1(x))
+
+        for layer in self.layers:
+            x = nn.functional.relu(layer(x))
+
+        x = self.fc2(x)
+        return x
 
 class AlexNet(nn.Module):
     def __init__(self, num_classes=10, dropout=0.5):

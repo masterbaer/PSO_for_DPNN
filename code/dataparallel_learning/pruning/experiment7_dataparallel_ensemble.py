@@ -16,7 +16,7 @@ import torchvision
 import torch_pruning as tp
 
 from dataloader import set_all_seeds, get_dataloaders_cifar10, get_dataloaders_cifar10_distributed
-from model import NeuralNetwork
+from model import NeuralNetwork, NN_Linear
 
 def combine_models(model0, model1, model2, model3, combined_model, first_layer_name, last_layer_name):
     for (l0_name, l0), (l1_name, l1), (l2_name, l2), (l3_name, l3), (l_combined_name, l_combined) in zip(
@@ -157,7 +157,7 @@ if __name__ == '__main__':
         image_shape = images.shape
         break
 
-    model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes).to(device)
+    model = NN_Linear(image_shape[1] * image_shape[2] * image_shape[3], num_classes, hidden_size=512, hidden_number=3)
 
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
 
@@ -196,7 +196,7 @@ if __name__ == '__main__':
                     importance=imp,
                     ch_sparsity=sparsity,
                     root_module_types=[torch.nn.Linear],
-                    ignored_layers=[model.fc4],
+                    ignored_layers=[model.fc2],
                 )
                 pruner.step()
 
@@ -209,22 +209,23 @@ if __name__ == '__main__':
 
                 if rank == 0:
                     # build the combined model
-                    combined_model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3],
-                                                           num_classes).to(device)
+                    combined_model = NN_Linear(image_shape[1] * image_shape[2] * image_shape[3], num_classes, hidden_size=512, hidden_number=3)
+
                     for param in combined_model.parameters():
                         param.data = torch.zeros_like(param.data)
 
-                    model0 = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)
-                    model1 = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)
-                    model2 = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)
-                    model3 = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes)
+                    model0 = NN_Linear(image_shape[1] * image_shape[2] * image_shape[3], num_classes, hidden_size=128, hidden_number=3)
+                    model1 = NN_Linear(image_shape[1] * image_shape[2] * image_shape[3], num_classes, hidden_size=128, hidden_number=3)
+                    model2 = NN_Linear(image_shape[1] * image_shape[2] * image_shape[3], num_classes, hidden_size=128, hidden_number=3)
+                    model3 = NN_Linear(image_shape[1] * image_shape[2] * image_shape[3], num_classes, hidden_size=128, hidden_number=3)
+
                     model0.load_state_dict(state_dict[0])
                     model1.load_state_dict(state_dict[1])
                     model2.load_state_dict(state_dict[2])
                     model3.load_state_dict(state_dict[3])
 
                     combine_models(model0, model1, model2, model3, combined_model, first_layer_name="fc1",
-                                   last_layer_name="fc4")
+                                   last_layer_name="fc2")
                     combined_state_dict = combined_model.state_dict()
 
                 # distribute the combined model state dict

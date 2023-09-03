@@ -11,7 +11,8 @@ import torchvision
 import torch_pruning as tp
 
 from dataloader import set_all_seeds, get_dataloaders_cifar10, get_dataloaders_cifar10_distributed
-from model import NeuralNetwork, CombinedNeuralNetwork
+from model import NeuralNetwork, CombinedNeuralNetwork, NN_Linear
+
 
 def combine_models(model0, model1, model2, model3, combined_model, first_layer_name, last_layer_name):
     for (l0_name, l0), (l1_name, l1), (l2_name, l2), (l3_name, l3), (l_combined_name, l_combined) in zip(
@@ -150,7 +151,7 @@ if __name__ == '__main__':
         image_shape = images.shape
         break
 
-    model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes).to(device)
+    model = NN_Linear(image_shape[1] * image_shape[2] * image_shape[3], num_classes, hidden_size=128, hidden_number=3)
     # init all ranks equally for synchronous sgd
     state_dict = model.state_dict()
     state_dict = comm.bcast(state_dict, root=0)
