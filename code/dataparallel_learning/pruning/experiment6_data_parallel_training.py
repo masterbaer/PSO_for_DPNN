@@ -4,6 +4,8 @@ We expect individual models to be worse, the combined model to be worse as well.
 The hope is that a round of finetuning can recover the accuracy, and hopefully, reach the ensemble-accuracy as if
 all models got all data.
 """
+import sys
+import time
 
 from mpi4py import MPI
 import torch
@@ -45,7 +47,11 @@ if __name__ == '__main__':
     set_all_seeds(seed)
 
     b = 256
-    e = 60
+    e = 120
+
+    dataset = sys.argv[1]
+    if rank == 0:
+        print("partitioning:", dataset)
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')  # Set device.
     set_all_seeds(seed)  # Set all seeds to chosen random seed.
@@ -57,31 +63,47 @@ if __name__ == '__main__':
         torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
 
-    # GET PYTORCH DATALOADERS FOR TRAINING, TESTING, AND VALIDATION DATASET.
-    train_loader, valid_loader = get_dataloaders_cifar10_distributed(
-        batch_size=b,
-        root="../../data",
-        validation_fraction=0.1,
-        train_transforms=cifar_10_transforms,
-        test_transforms=cifar_10_transforms,
-        num_workers=0,
-        world_size=world_size,
-        rank=rank
-    )
+    train_loader = None
+    valid_loader = None
+    test_loader = None
 
-    test_dataset = torchvision.datasets.CIFAR10(
+    if dataset == "dataparallel":
+        # GET PYTORCH DATALOADERS FOR TRAINING, TESTING, AND VALIDATION DATASET.
+        train_loader, valid_loader = get_dataloaders_cifar10_distributed(
+            batch_size=b,
+            root="../../data",
+            validation_fraction=0.1,
+            train_transforms=cifar_10_transforms,
+            test_transforms=cifar_10_transforms,
+            num_workers=0,
+            world_size=world_size,
+            rank=rank
+        )
+
+        test_dataset = torchvision.datasets.CIFAR10(
             root='../../data',
             train=False,
             transform=cifar_10_transforms,
             download=True
         )
 
-    test_loader = torch.utils.data.DataLoader(
+        test_loader = torch.utils.data.DataLoader(
             dataset=test_dataset,
             batch_size=b,
             shuffle=False
         )
+        print("using a data partition on each worker")
 
+    if dataset == "full":
+        train_loader, valid_loader, test_loader = get_dataloaders_cifar10(
+            batch_size=b,
+            root="../../data",
+            validation_fraction=0.1,
+            train_transforms=cifar_10_transforms,
+            test_transforms=cifar_10_transforms,
+            num_workers=0
+        )
+        print("using the full data set on each worker")
 
 
     learning_rate = 0.01
@@ -101,9 +123,12 @@ if __name__ == '__main__':
 
     combined_test_accuracy_list = []
     test_accuracy_list = []
+    time_list = []
+    time_per_epoch = 0.0
 
     for epoch in range(e):
 
+        start_time = time.perf_counter()
         model.train()
 
         for i, (inputs, labels) in enumerate(train_loader):
@@ -117,6 +142,10 @@ if __name__ == '__main__':
             loss = loss_fn(outputs, labels)
             loss.backward()
             optimizer.step()
+        end_time = time.perf_counter()
+        time_per_epoch += end_time-start_time
+        time_list.append(time_per_epoch)
+
 
         state_dict = model.state_dict()
         state_dict = comm.gather(state_dict, root=0)
@@ -203,9 +232,11 @@ if __name__ == '__main__':
 
             print(f"test accuracy after {epoch+1} epochs: {test_accuracy, combined_test_accuracy}")
 
-    torch.save(model.state_dict(), f"ex6_model_{rank}.pt")
-    torch.save(test_accuracy_list, f'ex6_test_accuracy{rank}.pt')
+    torch.save(model.state_dict(), f"ex6_{dataset}_model_{rank}.pt")
+    torch.save(test_accuracy_list, f'ex6_test_accuracy_{dataset}_{rank}.pt')
 
     if rank == 0:
-        torch.save(combined_test_accuracy_list, 'ex6_combined_test_accuracy.pt')
-        torch.save(combined_model.state_dict(), "ex6_combined_model.pt")
+        torch.save(combined_test_accuracy_list, f'ex6_combined_{dataset}_test_accuracy.pt')
+        torch.save(combined_model.state_dict(), f"ex6_combined_{dataset}_model.pt")
+        print("time per epoch: ", time_per_epoch/e)
+        torch.save(time_list, f"ex6_time_list_{dataset}.pt")

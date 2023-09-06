@@ -18,4 +18,5 @@ module load devel/cuda/10.2
 
 source venv/bin/activate      # Activate your virtual environment.
 
-mpirun python -u dataparallel_learning/pruning/experiment6_data_parallel_training.py
+mpirun python -u dataparallel_learning/pruning/experiment6_data_parallel_training.py "full"
+mpirun python -u dataparallel_learning/pruning/experiment6_data_parallel_training.py "dataparallel"
