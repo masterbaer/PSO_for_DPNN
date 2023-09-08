@@ -207,6 +207,19 @@ if __name__ == '__main__':
     model2.eval()
     model3.eval()
 
+    #_, acc = evaluate_model(model0, test_loader, device)
+    #print(acc)
+    #0.6401000022888184
+    #_, acc = evaluate_model(model1, test_loader, device)
+    #print(acc)
+    # 0.6328999996185303
+    #_, acc = evaluate_model(model2, test_loader, device)
+    #print(acc)
+    # 0.6341999769210815
+    #_, acc = evaluate_model(model3, test_loader, device)
+    #print(acc)
+    # 0.6216999888420105
+
     for i, layer in enumerate(model0.modules()):
         if isinstance(layer, torch.nn.Conv2d):
             print(layer.weight.shape)
@@ -281,7 +294,48 @@ if __name__ == '__main__':
 
     combined_model.eval()
     _, accuracy_combined = evaluate_model(combined_model, test_loader, device)
-    print("accuracy_combined")
+    print(accuracy_combined)
 
-
-    #
+    """
+    validation accuracy after 1 epochs: 0.5482000112533569
+    validation accuracy after 2 epochs: 0.5727999806404114
+    validation accuracy after 3 epochs: 0.6037999987602234
+    validation accuracy after 4 epochs: 0.615399956703186
+    validation accuracy after 5 epochs: 0.6082000136375427
+    validation accuracy after 6 epochs: 0.6169999837875366
+    validation accuracy after 7 epochs: 0.6293999552726746
+    validation accuracy after 8 epochs: 0.628600001335144
+    validation accuracy after 9 epochs: 0.6441999673843384
+    validation accuracy after 10 epochs: 0.6439999938011169
+    validation accuracy after 11 epochs: 0.6499999761581421
+    validation accuracy after 12 epochs: 0.6525999903678894
+    validation accuracy after 13 epochs: 0.6599999666213989
+    validation accuracy after 14 epochs: 0.6651999950408936
+    validation accuracy after 15 epochs: 0.6624000072479248
+    validation accuracy after 16 epochs: 0.661799967288971
+    validation accuracy after 17 epochs: 0.6620000004768372
+    validation accuracy after 18 epochs: 0.6597999930381775
+    validation accuracy after 19 epochs: 0.670199990272522
+    validation accuracy after 20 epochs: 0.6663999557495117
+    validation accuracy after 21 epochs: 0.6692000031471252
+    validation accuracy after 22 epochs: 0.6669999957084656
+    validation accuracy after 23 epochs: 0.6674000024795532
+    validation accuracy after 24 epochs: 0.6678000092506409
+    validation accuracy after 25 epochs: 0.6725999712944031
+    validation accuracy after 26 epochs: 0.6696000099182129
+    validation accuracy after 27 epochs: 0.6717999577522278
+    validation accuracy after 28 epochs: 0.6643999814987183
+    validation accuracy after 29 epochs: 0.6751999855041504
+    validation accuracy after 30 epochs: 0.6789999604225159
+    validation accuracy after 31 epochs: 0.6765999794006348
+    validation accuracy after 32 epochs: 0.6753999590873718
+    validation accuracy after 33 epochs: 0.6779999732971191
+    validation accuracy after 34 epochs: 0.6811999678611755
+    validation accuracy after 35 epochs: 0.6647999882698059
+    validation accuracy after 36 epochs: 0.6639999747276306
+    validation accuracy after 37 epochs: 0.6735999584197998
+    validation accuracy after 38 epochs: 0.6681999564170837
+    validation accuracy after 39 epochs: 0.6728000044822693
+    validation accuracy after 40 epochs: 0.6733999848365784
+    0.6705999970436096
+    """
