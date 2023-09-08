@@ -68,7 +68,7 @@ if __name__ == '__main__':
 
     combined_model = CombinedNeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes).to(device)
 
-    combined_model.load_state_dict(torch.load("ex6_combined_model.pt"))
+    combined_model.load_state_dict(torch.load("ex6_combined_dataparallel_model.pt"))
     optimizer_combined = torch.optim.SGD(combined_model.parameters(), lr=learning_rate, momentum=0.9)
     test_accuracy_list_combined = []
 

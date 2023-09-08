@@ -1,7 +1,9 @@
 import torch
 import torchvision
+from torchvision import transforms as transforms
+
 from dataloader import get_dataloaders_cifar10, set_all_seeds
-from sequential_learning.pruning_playground.model import NeuralNetwork
+from model import NeuralNetwork, LeNet
 
 
 def evaluate_model(model, data_loader, device):
@@ -29,27 +31,24 @@ def evaluate_model(model, data_loader, device):
 
 if __name__ == '__main__':
 
-    seed = 0
+    seed = 3
     b = 256
     e = 40
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')  # Set device.
     print(f'Using {device} device.')
     set_all_seeds(seed)  # Set all seeds to chosen random seed.
 
-    cifar_10_transforms = torchvision.transforms.Compose([
-        torchvision.transforms.Resize((70, 70)),
-        torchvision.transforms.RandomCrop((64, 64)),
-        torchvision.transforms.ToTensor(),
-        torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-    ])
+    # https://github.com/soapisnotfat/pytorch-cifar10/blob/master/main.py
+    train_transform = transforms.Compose([transforms.RandomHorizontalFlip(), transforms.ToTensor()])
+    test_transform = transforms.Compose([transforms.ToTensor()])
 
     # GET PYTORCH DATALOADERS FOR TRAINING, TESTING, AND VALIDATION DATASET.
     train_loader, valid_loader, test_loader = get_dataloaders_cifar10(
         batch_size=b,
         root="../../data",
         validation_fraction=0.1,
-        train_transforms=cifar_10_transforms,
-        test_transforms=cifar_10_transforms,
+        train_transforms=train_transform,
+        test_transforms=test_transform,
         num_workers=0
     )
 
@@ -59,11 +58,14 @@ if __name__ == '__main__':
     image_shape = None
     for images, labels in train_loader:
         image_shape = images.shape
+        print(image_shape)
         break
 
-    model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes).to(device)
+    #model = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes).to(device)
+    model = LeNet(num_classes).to(device)
+
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, mode='max', verbose=True)
+    #scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, mode='max', verbose=True)
 
     valid_loss_list = []
     valid_accuracy_list = []
@@ -89,9 +91,9 @@ if __name__ == '__main__':
         valid_loss_list.append(valid_loss)
         valid_accuracy_list.append(valid_accuracy)
 
-        scheduler.step(valid_accuracy_list[-1])
+        #scheduler.step(valid_accuracy_list[-1])
 
-    torch.save(model.state_dict(), f"simple_model_{seed}.pt")
+    torch.save(model.state_dict(), f"model_{seed}.pt")
 
-    torch.save(valid_loss_list, f'simple_gd_loss_{seed}.pt')
-    torch.save(valid_accuracy_list, f'simple_gd_accuracy_{seed}.pt')
+    torch.save(valid_loss_list, f'loss_{seed}.pt')
+    torch.save(valid_accuracy_list, f'accuracy_{seed}.pt')

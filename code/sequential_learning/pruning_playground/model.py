@@ -1,7 +1,7 @@
 #  This file contains neural network models used in our experiments.
 import torch
 import torch.nn as nn
-
+import torch.nn.functional as F
 
 class NeuralNetwork(nn.Module):
     def __init__(self, input_dim, output_dim):
@@ -83,4 +83,59 @@ class AlexNet(nn.Module):
         x = self.avgpool(x)  # average pooling
         x = torch.flatten(x, 1)  # flattening
         x = self.classifier(x)  # classification
+        return x
+
+# https://github.com/soapisnotfat/pytorch-cifar10/blob/master/models/LeNet.py
+class LeNet(nn.Module):
+    def __init__(self, num_classes=10):
+        super(LeNet, self).__init__()
+        self.conv1 = nn.Conv2d(3, 6, kernel_size=5) # 3 input channels,6 output feature maps, kernelsize 5 (stride 1, padding 0 implicitly)
+        self.conv2 = nn.Conv2d(6, 16, kernel_size=5)
+        self.fc1 = nn.Linear(16*5*5, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, num_classes)
+
+    def forward(self, x):
+        x = F.relu(self.conv1(x))
+        x = F.max_pool2d(x, 2)
+        x = F.relu(self.conv2(x))
+        x = F.max_pool2d(x, 2)
+        x = x.view(x.size(0), -1)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+    """
+    (see # https://www.baeldung.com/cs/convolutional-layer-size: 
+        conv2d: (output_size = 1 + (input_size - kernel_size + 2 * padding) / stride) )
+        pooling: half for 2x2 masks
+        
+    Input image: [3,32,32]. 
+    after conv1: [6, 28, 28]                     1+(32-5)/1 = 28
+    after pooling1: [6,14,14]                 
+    after conv2: [16,10, 10]                     1+(14-5)/1 = 10
+    after pooling2: [16,5,5]
+    after flattening: [16*5*5] = [120]
+    after fc2: [84]
+    after fc3: [10]
+    """
+
+class CombinedLeNet(nn.Module):
+    def __init__(self, num_classes=10):
+        super(CombinedLeNet, self).__init__()
+        self.conv1 = nn.Conv2d(3, 6*4, kernel_size=5) # 3 input channels,6 output feature maps, kernelsize 5 (stride 1, padding 0 implicitly)
+        self.conv2 = nn.Conv2d(6*4, 16*4, kernel_size=5)
+        self.fc1 = nn.Linear(16*5*5*4, 120*4)
+        self.fc2 = nn.Linear(120*4, 84*4)
+        self.fc3 = nn.Linear(84*4, num_classes)
+
+    def forward(self, x):
+        x = F.relu(self.conv1(x))
+        x = F.max_pool2d(x, 2)
+        x = F.relu(self.conv2(x))
+        x = F.max_pool2d(x, 2)
+        x = x.view(x.size(0), -1)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
         return x

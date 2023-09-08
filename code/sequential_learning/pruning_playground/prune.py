@@ -5,9 +5,11 @@ import torch
 import torchvision
 from torch.nn.utils import prune
 import torch_pruning as tp
+from torchvision import transforms
 
 from sequential_learning.pruning_playground.dataloader import set_all_seeds, get_dataloaders_cifar10
-from sequential_learning.pruning_playground.model import NeuralNetwork, CombinedNeuralNetwork
+from sequential_learning.pruning_playground.model import NeuralNetwork, CombinedNeuralNetwork, LeNet, CombinedLeNet
+
 
 # we try pytorch's pruning in this file
 # for pruning with a threshhold see
@@ -61,164 +63,7 @@ def evaluate_model_output_averaging(models, data_loader, device):
     return loss_per_batch, accuracy
 
 
-def apply_layerwise_unstructured_l1_pruning(layer):
-    # use model.apply(apply_layerwise_pruning) to prune
-    if isinstance(layer, torch.nn.Linear):
-        prune.l1_unstructured(layer, name='weight', amount=0.4)
-
-
-def apply_layerwise_structured_ln_pruning_(layer):
-    # use model.apply(apply_layerwise_pruning) to prune
-    if isinstance(layer, torch.nn.Linear):
-        # dim = 1 disconnects one input from all neurons,
-        # dim = 0 disconnects one neuron.
-        # See https://towardsdatascience.com/how-to-prune-neural-networks-with-pytorch-ebef60316b91 .
-        prune.ln_structured(layer, name='weight', amount=0.75, n=2, dim=0)
-
-
-def apply_layerwise_structured_ln_pruning_without_last_layer(model, amount=0.5, n=2, dim=0):
-    # dim = 0 corresponds to pruning neurons, dim=1 prunes the input connections
-    # use model.apply(apply_layerwise_pruning) to prune
-    for name, layer in model.named_modules():
-        print(name, layer)
-        if isinstance(layer, torch.nn.Linear) and name != "fc4":
-            prune.ln_structured(layer, name='weight', amount=0.5, n=2, dim=0)
-
-
-# use global l1 unstructured pruning
-# see https://stackoverflow.com/questions/70346398/how-does-pytorch-l1-norm-pruning-works
-def apply_global_unstructured_pruning(parameters_to_prune, amount=0.4):
-    # e.g.
-    # parameters_to_prune = [
-    #         (module, "weight") for module in filter(lambda m: type(m) == torch.nn.Linear, model0.modules())
-    #     ]
-
-    # see https://towardsdatascience.com/how-to-prune-neural-networks-with-pytorch-ebef60316b91
-    prune.global_unstructured(
-        parameters_to_prune,
-        pruning_method=prune.L1Unstructured,
-        amount=amount,
-    )
-
-
-# the mask is removed and the new parameters are assigned (explicit 0 instead of mask)
-def remove_pruned_weights(model):
-    for layer in model.modules():
-        if isinstance(layer, torch.nn.Linear):
-            if prune.is_pruned(layer):
-                prune.remove(layer, 'weight')
-
-
-if __name__ == '__main__':
-
-    seed = 0
-    b = 256
-    e = 40
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')  # Set device.
-    print(f'Using {device} device.')
-    set_all_seeds(seed)  # Set all seeds to chosen random seed.
-
-    cifar_10_transforms = torchvision.transforms.Compose([
-        torchvision.transforms.Resize((70, 70)),
-        torchvision.transforms.RandomCrop((64, 64)),
-        torchvision.transforms.ToTensor(),
-        torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-    ])
-
-    # GET PYTORCH DATALOADERS FOR TRAINING, TESTING, AND VALIDATION DATASET.
-    train_loader, valid_loader, test_loader = get_dataloaders_cifar10(
-        batch_size=b,
-        root="../../data",
-        validation_fraction=0.1,
-        train_transforms=cifar_10_transforms,
-        test_transforms=cifar_10_transforms,
-        num_workers=0
-    )
-
-    num_classes = 10
-    image_shape = None
-    for images, labels in train_loader:
-        image_shape = images.shape
-        break
-
-    model0 = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes).to(device)
-    model1 = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes).to(device)
-    model2 = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes).to(device)
-    model3 = NeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes).to(device)
-
-    model0.load_state_dict(torch.load("simple_model_0.pt"))
-    model1.load_state_dict(torch.load("simple_model_1.pt"))
-    model2.load_state_dict(torch.load("simple_model_2.pt"))
-    model3.load_state_dict(torch.load("simple_model_3.pt"))
-
-    model0.eval()
-    model1.eval()
-    model2.eval()
-    model3.eval()
-
-    # _, accuracy0 = evaluate_model(model0, test_loader, device)
-    # print(accuracy0)
-
-    # model0.apply(apply_layerwise_unstructured_l1_pruning) # pruning every fully connected layer individiually
-
-    # parameters_to_prune = [
-    #    (module, "weight") for module in filter(lambda m: type(m) == torch.nn.Linear, model0.modules())
-    # ]
-    # apply_global_unstructured_pruning(parameters_to_prune)
-
-    # model0.apply(apply_layerwise_structured_ln_pruning_without_last_layer)
-
-    # TODO activate pruning
-    # apply_layerwise_structured_ln_pruning_without_last_layer(model0)
-    # remove_pruned_weights(model0)
-
-    # apply_layerwise_structured_ln_pruning_without_last_layer(model1)
-    # remove_pruned_weights(model1)
-
-    # apply_layerwise_structured_ln_pruning_without_last_layer(model2)
-    # remove_pruned_weights(model2)
-
-    # apply_layerwise_structured_ln_pruning_without_last_layer(model3)
-    # remove_pruned_weights(model3)
-
-    # _, accuracy0 = evaluate_model(model0, test_loader, device)
-    # print(accuracy0)
-
-    for i, layer in enumerate(model0.modules()):
-        number_of_zeros = 0
-        number_of_params = 0
-
-        # number_of_zero_neurons = 0
-        # number_of_neurons = 0
-        if isinstance(layer, torch.nn.Linear):
-            # print(i, layer)
-
-            for param in layer.parameters():
-                print(param.shape)
-                # count number of zeros
-                # https://discuss.pytorch.org/t/how-to-count-the-number-of-zero-weights-in-a-pytorch-model/13549/2
-                number_of_zeros += param.numel() - param.nonzero().size(0)
-                number_of_params += param.numel()
-
-            print(f"{number_of_zeros} / {number_of_params} are zero")
-
-    combined_model = CombinedNeuralNetwork(image_shape[1] * image_shape[2] * image_shape[3], num_classes).to(device)
-    for param in combined_model.parameters():
-        param.data = torch.zeros_like(param.data)
-
-    print(combined_model.fc4.weight.shape)
-    print(model0.fc4.weight.shape)
-    print(model0.fc4.weight.shape[0])
-
-    # combined_model.fc1.weight.data[0:512, :] += model0.fc1.weight.data
-    # combined_model.fc1.weight.data[512:1024, :] += model1.fc1.weight.data
-    # combined_model.fc1.weight.data[1024:1536, :] += model2.fc1.weight.data
-    # combined_model.fc1.weight.data[1536:2048, :] += model3.fc1.weight.data
-    # combined_model.fc1.bias.data[0:512] += model0.fc1.bias.data
-    # combined_model.fc1.bias.data[512:1024] += model1.fc1.bias.data
-    # combined_model.fc1.bias.data[1024:1536] += model2.fc1.bias.data
-    # combined_model.fc1.bias.data[1536:2048] += model3.fc1.bias.data
-
+def combine_models_LeNet(model0, model1, model2, model3, combined_model, first_layer_name="None", last_layer_name="fc3"):
     for (l0_name, l0), (l1_name, l1), (l2_name, l2), (l3_name, l3), (l_combined_name, l_combined) in zip(
             model0.named_modules(),
             model1.named_modules(),
@@ -228,7 +73,7 @@ if __name__ == '__main__':
 
         if isinstance(l0, torch.nn.Linear):
 
-            if l0_name == "fc1":
+            if l0_name == first_layer_name:
                 # not last layer. Stack the layers on top of each other.
                 number_of_neurons = l0.weight.shape[0]  # [1] gives the number of inputs
                 l_combined.weight.data[0:number_of_neurons, :] += l0.weight.data
@@ -240,7 +85,7 @@ if __name__ == '__main__':
                 l_combined.bias.data[2 * number_of_neurons:3 * number_of_neurons] += l2.bias.data
                 l_combined.bias.data[3 * number_of_neurons:4 * number_of_neurons] += l3.bias.data
 
-            elif l0_name == "fc4":
+            elif l0_name == last_layer_name:
                 # last layer. Add the layers and divide the parameters by 4 to average them.
 
                 number_of_inputs = l0.weight.shape[1]
@@ -274,56 +119,133 @@ if __name__ == '__main__':
                 l_combined.bias.data[2 * number_of_neurons:3 * number_of_neurons] += l2.bias.data
                 l_combined.bias.data[3 * number_of_neurons:4 * number_of_neurons] += l3.bias.data
 
+        if isinstance(l0, torch.nn.Conv2d):
+            # single model:
+            #weight: torch.Size([6, 3, 5, 5]) (out,in,kernelx,kernely)
+            #bias: torch.Size([6])
 
-    #combined_model.eval()
-    #_, accuracy0 = evaluate_model(model0, test_loader, device)
-    #_, accuracy1 = evaluate_model(model1, test_loader, device)
-    #_, accuracy2 = evaluate_model(model2, test_loader, device)
-    #_, accuracy3 = evaluate_model(model3, test_loader, device)
-    #_, accuracy_combined = evaluate_model(combined_model, test_loader, device)
+            # combined model:
+            # weight: torch.Size([24, 3, 5, 5])
+            # bias: torch.Size([24])
 
-    # sanity check
-    #_, accuracy_output_averaged = evaluate_model_output_averaging([model0, model1, model2, model3], test_loader, device)
-    #print(accuracy0, accuracy1, accuracy2, accuracy3, accuracy_output_averaged, accuracy_combined)
+            output_feature_number = l0.weight.shape[0] # output channels of single model
+            input_feature_number = l0.weight.shape[1] # input channels of single model
+            print(l0.weight.shape[0], l_combined.weight.shape[0])
+            print(l0.weight.shape[1], l_combined.weight.shape[1])
+            print(l0.weight.shape[2], l_combined.weight.shape[2])
+            print(l0.weight.shape[3], l_combined.weight.shape[3])
 
-    # using no pruning:
-    # 0.5656999945640564 0.5669999718666077 0.5879999995231628 0.5681999921798706 0.6137999892234802 0.6162999868392944
-    # changing the order leads to exact results --> copying was done correctly!
+            if l0.weight.shape[1] == l_combined.weight.shape[1]:
+                # the input is equal e.g. at the very first conv2d.
+                l_combined.weight.data[0:output_feature_number,:,:,:] += l0.weight.data
+                l_combined.weight.data[output_feature_number:2*output_feature_number, :, :, :] += l1.weight.data
+                l_combined.weight.data[2*output_feature_number:3*output_feature_number, :, :, :] += l2.weight.data
+                l_combined.weight.data[3*output_feature_number:4*output_feature_number, :, :, :] += l3.weight.data
 
-    # (re-) apply pruning on the large model
+                l_combined.bias.data[0:output_feature_number] = l0.bias.data
+                l_combined.bias.data[output_feature_number:2 * output_feature_number] += l1.bias.data
+                l_combined.bias.data[2 * output_feature_number:3 * output_feature_number] += l2.bias.data
+                l_combined.bias.data[3 * output_feature_number:4 * output_feature_number] += l3.bias.data
+            else:
+                # there 4 times as many input channels
+                l_combined.weight.data[0:output_feature_number, 0:input_feature_number, :, :] += l0.weight.data
+                l_combined.weight.data[output_feature_number:2 * output_feature_number, input_feature_number:2*input_feature_number, :, :] += l1.weight.data
+                l_combined.weight.data[2 * output_feature_number:3 * output_feature_number, 2*input_feature_number:3*input_feature_number, :, :] += l2.weight.data
+                l_combined.weight.data[3 * output_feature_number:4 * output_feature_number, 3*input_feature_number:4*input_feature_number, :, :] += l3.weight.data
 
-    apply_layerwise_structured_ln_pruning_without_last_layer(combined_model, amount=0.5)
+                l_combined.bias.data[0:output_feature_number] = l0.bias.data
+                l_combined.bias.data[output_feature_number:2 * output_feature_number] += l1.bias.data
+                l_combined.bias.data[2 * output_feature_number:3 * output_feature_number] += l2.bias.data
+                l_combined.bias.data[3 * output_feature_number:4 * output_feature_number] += l3.bias.data
 
-
-    combined_model.eval()
-    _, accuracy_combined = evaluate_model(combined_model, test_loader, device)
-    print(accuracy_combined)
-
-
-    for i, layer in enumerate(combined_model.modules()):
-        number_of_zeros = 0
-        number_of_params = 0
-
-        # number_of_zero_neurons = 0
-        # number_of_neurons = 0
-        if isinstance(layer, torch.nn.Linear):
-            #print(dict(layer.named_buffers())["weight_mask"].shape)
-            #print(list(layer.named_buffers()))
-            #continue
-            # print(i, layer)
-
-            for param in layer.parameters():
-                print(param.shape)
-                # count number of zeros
-                # https://discuss.pytorch.org/t/how-to-count-the-number-of-zero-weights-in-a-pytorch-model/13549/2
-                number_of_zeros += param.numel() - param.nonzero().size(0)
-                number_of_params += param.numel()
-
-            print(f"{number_of_zeros} / {number_of_params} are zero")
+            # there is third case here because convolutions are not used as the last layer
 
 
+if __name__ == '__main__':
 
-    # finetune the model
+    seed = 0
+    b = 256
+    e = 40
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')  # Set device.
+    print(f'Using {device} device.')
+    set_all_seeds(seed)  # Set all seeds to chosen random seed.
+
+    # https://github.com/soapisnotfat/pytorch-cifar10/blob/master/main.py
+    train_transform = transforms.Compose([transforms.RandomHorizontalFlip(), transforms.ToTensor()])
+    test_transform = transforms.Compose([transforms.ToTensor()])
+
+    # GET PYTORCH DATALOADERS FOR TRAINING, TESTING, AND VALIDATION DATASET.
+    train_loader, valid_loader, test_loader = get_dataloaders_cifar10(
+        batch_size=b,
+        root="../../data",
+        validation_fraction=0.1,
+        train_transforms=train_transform,
+        test_transforms=test_transform,
+        num_workers=0
+    )
+
+    num_classes = 10
+    image_shape = None
+    example_inputs = None
+    for images, labels in train_loader:
+        example_inputs = images
+        image_shape = images.shape
+        break
+
+    model0 = LeNet(num_classes).to(device)
+    model1 = LeNet(num_classes).to(device)
+    model2 = LeNet(num_classes).to(device)
+    model3 = LeNet(num_classes).to(device)
+
+    model0.load_state_dict(torch.load("model_0.pt"))
+    model1.load_state_dict(torch.load("model_1.pt"))
+    model2.load_state_dict(torch.load("model_2.pt"))
+    model3.load_state_dict(torch.load("model_3.pt"))
+
+    model0.eval()
+    model1.eval()
+    model2.eval()
+    model3.eval()
+
+    for i, layer in enumerate(model0.modules()):
+        if isinstance(layer, torch.nn.Conv2d):
+            print(layer.weight.shape)
+            print(layer.bias.shape)
+            print(layer.bias)
+            break
+
+
+    # _, acc = evaluate_model_output_averaging([model0,model1,model2,model3],test_loader, device)
+    # print(acc)
+    # 0.6994999647140503
+
+    combined_model = CombinedLeNet().to(device)
+    for param in combined_model.parameters():
+        param.data = torch.zeros_like(param.data)
+
+    combine_models_LeNet(model0,model1,model2,model3,combined_model)
+
+    #_, acc = evaluate_model(combined_model,test_loader, device)
+    #print(acc)
+    # 0.6994999647140503
+
+    combined_model.to("cpu")
+
+    # prune
+
+    imp = tp.importance.MagnitudeImportance(p=2)
+    pruner_combined = tp.pruner.MagnitudePruner(
+        combined_model,
+        example_inputs,
+        importance=imp,
+        ch_sparsity=0.75,
+        root_module_types=[torch.nn.Conv2d, torch.nn.Linear],
+        ignored_layers=[combined_model.fc3],
+    )
+    pruner_combined.step()
+
+    # finetune
+
 
     learning_rate = 0.01
     optimizer = torch.optim.SGD(combined_model.parameters(), lr=learning_rate, momentum=0.9)
@@ -331,6 +253,8 @@ if __name__ == '__main__':
 
     valid_loss_list = []
     valid_accuracy_list = []
+
+    combined_model.to(device)
 
     for epoch in range(e):
 
@@ -360,30 +284,4 @@ if __name__ == '__main__':
     print("accuracy_combined")
 
 
-    for i, layer in enumerate(combined_model.modules()):
-        number_of_zeros = 0
-        number_of_params = 0
-
-        # number_of_zero_neurons = 0
-        # number_of_neurons = 0
-        if isinstance(layer, torch.nn.Linear):
-            #print(dict(layer.named_buffers())["weight_mask"].shape)
-            #print(list(layer.named_buffers()))
-            #continue
-            # print(i, layer)
-
-            for param in layer.parameters():
-                print(param.shape)
-                # count number of zeros
-                # https://discuss.pytorch.org/t/how-to-count-the-number-of-zero-weights-in-a-pytorch-model/13549/2
-                number_of_zeros += param.numel() - param.nonzero().size(0)
-                number_of_params += param.numel()
-
-            print(f"{number_of_zeros} / {number_of_params} are zero")
-
-
-    # TODO lower scheduler time and increase number of epochs for training to see if convergence happened on local models
-    # TODO remove the pruned neurons from the big model (beware, pytorch does not prune the biases in ln_structured)
-    # only the incoming weights are set to 0 (or masked). The outgoing weights and the biases are untouched.
-
-    # TODO: Compare Output Averaging vs. this approach when finetuning
+    #
