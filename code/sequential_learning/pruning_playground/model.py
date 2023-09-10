@@ -202,6 +202,56 @@ class VGG(nn.Module):
     # flatten --> [512]
 
 
+
+
+
+class CombinedVGG(nn.Module):
+    def __init__(self, vgg_name, num_classes=10):
+        super(CombinedVGG, self).__init__()
+        self.features = self._make_layers(cfg[vgg_name])
+        self.classifier = nn.Linear(512 * 4, num_classes)
+
+    def forward(self, x):
+        out = self.features(x)
+        out = out.view(out.size(0), -1)
+        out = self.classifier(out)
+        return out
+
+    def _make_layers(self, cfg):
+        layers = []
+        in_channels = 3
+        for x in cfg:
+            if x == 'M':
+                layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
+            else:
+                layers += [nn.Conv2d(in_channels, 4 * x, kernel_size=3, padding=1),
+                           nn.BatchNorm2d(4 * x),
+                           nn.ReLU(inplace=True)]
+                in_channels = 4 * x
+        layers += [nn.AvgPool2d(kernel_size=1, stride=1)]
+        return nn.Sequential(*layers)
+    # 'VGG11': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
+    # Input image: [3,32,32]
+
+    # conv1: [64*4, 32, 32]
+    # maxpool1 : [64*4, 16, 16]
+    # conv2: [128*4, 16,16]
+    # maxpool2: [128*4,8,8]
+    # conv3: [256*4,8,8]
+    # conv4: [256*4,8,8]
+    # maxpool3: [256*4,4,4]
+    # conv5 [512*4,4,4]
+    # conv6 [512*4,4,4]
+    # maxpool4 [512*4,2,2]
+    # conv7 [512*4,2,2]
+    # conv8 [512*4,2,2]
+    # maxpool5 [512*4,1,1]
+    # flatten --> [512*4]
+
+
+# This is can also be used for combining but torch-pruning cannot cope with 4 sequential BatchNorm-layers so we do not
+# use this approach
+"""
 class CustomBatchNorm(nn.Module):
     def __init__(self, num_channels):
         super(CustomBatchNorm, self).__init__()
@@ -229,53 +279,7 @@ class CustomBatchNorm(nn.Module):
         # Concatenate the batch-normalized group with the untouched group
         x = torch.cat([x1,x2,x3,x4], dim=1)
         return x
-
-"""
-class CombinedVGG(nn.Module):
-    def __init__(self, vgg_name, num_classes=10):
-        super(CombinedVGG, self).__init__()
-        self.features = self._make_layers(cfg[vgg_name])
-        self.classifier = nn.Linear(512 * 4, num_classes)
-
-    def forward(self, x):
-        out = self.features(x)
-        out = out.view(out.size(0), -1)
-        out = self.classifier(out)
-        return out
-
-    def _make_layers(self, cfg):
-        layers = []
-        in_channels = 3
-        for x in cfg:
-            if x == 'M':
-                layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
-            else:
-                layers += [nn.Conv2d(in_channels, 4 * x, kernel_size=3, padding=1),
-                           nn.BatchNorm2d(4 * x), # TODO use the custom batch norm instead of normal batch norm
-                           nn.ReLU(inplace=True)]
-                in_channels = 4 * x
-        layers += [nn.AvgPool2d(kernel_size=1, stride=1)]
-        return nn.Sequential(*layers)
-    # 'VGG11': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
-    # Input image: [3,32,32]
-
-    # conv1: [64*4, 32, 32]
-    # maxpool1 : [64*4, 16, 16]
-    # conv2: [128*4, 16,16]
-    # maxpool2: [128*4,8,8]
-    # conv3: [256*4,8,8]
-    # conv4: [256*4,8,8]
-    # maxpool3: [256*4,4,4]
-    # conv5 [512*4,4,4]
-    # conv6 [512*4,4,4]
-    # maxpool4 [512*4,2,2]
-    # conv7 [512*4,2,2]
-    # conv8 [512*4,2,2]
-    # maxpool5 [512*4,1,1]
-    # flatten --> [512*4]
-
-"""
-
+    
 class CombinedVGGCustomBatch(nn.Module):
     def __init__(self, vgg_name, num_classes=10):
         super(CombinedVGGCustomBatch, self).__init__()
@@ -301,3 +305,4 @@ class CombinedVGGCustomBatch(nn.Module):
                 in_channels = 4 * x
         layers += [nn.AvgPool2d(kernel_size=1, stride=1)]
         return nn.Sequential(*layers)
+"""

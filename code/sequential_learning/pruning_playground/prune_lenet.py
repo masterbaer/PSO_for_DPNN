@@ -262,10 +262,9 @@ if __name__ == '__main__':
 
     learning_rate = 0.01
     optimizer = torch.optim.SGD(combined_model.parameters(), lr=learning_rate, momentum=0.9)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, mode='max', verbose=True)
 
-    valid_loss_list = []
-    valid_accuracy_list = []
+    test_loss_list = []
+    test_accuracy_list = []
 
     combined_model.to(device)
 
@@ -284,58 +283,57 @@ if __name__ == '__main__':
 
         combined_model.eval()
 
-        valid_loss, valid_accuracy = evaluate_model(combined_model, valid_loader, device)
-        print(f"validation accuracy after {epoch+1} epochs: {valid_accuracy}")
+        test_loss, test_accuracy = evaluate_model(combined_model, test_loader, device)
+        print(f"test accuracy after {epoch+1} epochs: {test_accuracy}")
 
-        valid_loss_list.append(valid_loss)
-        valid_accuracy_list.append(valid_accuracy)
+        test_loss_list.append(test_loss)
+        test_accuracy_list.append(test_accuracy)
 
-        scheduler.step(valid_accuracy_list[-1])
 
     combined_model.eval()
     _, accuracy_combined = evaluate_model(combined_model, test_loader, device)
     print(accuracy_combined)
 
     """
-    validation accuracy after 1 epochs: 0.5482000112533569
-    validation accuracy after 2 epochs: 0.5727999806404114
-    validation accuracy after 3 epochs: 0.6037999987602234
-    validation accuracy after 4 epochs: 0.615399956703186
-    validation accuracy after 5 epochs: 0.6082000136375427
-    validation accuracy after 6 epochs: 0.6169999837875366
-    validation accuracy after 7 epochs: 0.6293999552726746
-    validation accuracy after 8 epochs: 0.628600001335144
-    validation accuracy after 9 epochs: 0.6441999673843384
-    validation accuracy after 10 epochs: 0.6439999938011169
-    validation accuracy after 11 epochs: 0.6499999761581421
-    validation accuracy after 12 epochs: 0.6525999903678894
-    validation accuracy after 13 epochs: 0.6599999666213989
-    validation accuracy after 14 epochs: 0.6651999950408936
-    validation accuracy after 15 epochs: 0.6624000072479248
-    validation accuracy after 16 epochs: 0.661799967288971
-    validation accuracy after 17 epochs: 0.6620000004768372
-    validation accuracy after 18 epochs: 0.6597999930381775
-    validation accuracy after 19 epochs: 0.670199990272522
-    validation accuracy after 20 epochs: 0.6663999557495117
-    validation accuracy after 21 epochs: 0.6692000031471252
-    validation accuracy after 22 epochs: 0.6669999957084656
-    validation accuracy after 23 epochs: 0.6674000024795532
-    validation accuracy after 24 epochs: 0.6678000092506409
-    validation accuracy after 25 epochs: 0.6725999712944031
-    validation accuracy after 26 epochs: 0.6696000099182129
-    validation accuracy after 27 epochs: 0.6717999577522278
-    validation accuracy after 28 epochs: 0.6643999814987183
-    validation accuracy after 29 epochs: 0.6751999855041504
-    validation accuracy after 30 epochs: 0.6789999604225159
-    validation accuracy after 31 epochs: 0.6765999794006348
-    validation accuracy after 32 epochs: 0.6753999590873718
-    validation accuracy after 33 epochs: 0.6779999732971191
-    validation accuracy after 34 epochs: 0.6811999678611755
-    validation accuracy after 35 epochs: 0.6647999882698059
-    validation accuracy after 36 epochs: 0.6639999747276306
-    validation accuracy after 37 epochs: 0.6735999584197998
-    validation accuracy after 38 epochs: 0.6681999564170837
-    validation accuracy after 39 epochs: 0.6728000044822693
-    validation accuracy after 40 epochs: 0.6733999848365784
-    0.6705999970436096
+    test accuracy after 1 epochs: 0.542199969291687
+    test accuracy after 2 epochs: 0.5798999667167664
+    test accuracy after 3 epochs: 0.5845000147819519
+    test accuracy after 4 epochs: 0.6008999943733215
+    test accuracy after 5 epochs: 0.6232999563217163
+    test accuracy after 6 epochs: 0.6337000131607056
+    test accuracy after 7 epochs: 0.6413999795913696
+    test accuracy after 8 epochs: 0.6474999785423279
+    test accuracy after 9 epochs: 0.64410001039505
+    test accuracy after 10 epochs: 0.6342999935150146
+    test accuracy after 11 epochs: 0.6585999727249146
+    test accuracy after 12 epochs: 0.6534000039100647
+    test accuracy after 13 epochs: 0.6624999642372131
+    test accuracy after 14 epochs: 0.6620999574661255
+    test accuracy after 15 epochs: 0.6541000008583069
+    test accuracy after 16 epochs: 0.6699000000953674
+    test accuracy after 17 epochs: 0.6644999980926514
+    test accuracy after 18 epochs: 0.6714999675750732
+    test accuracy after 19 epochs: 0.6610999703407288
+    test accuracy after 20 epochs: 0.6710999608039856
+    test accuracy after 21 epochs: 0.6811000108718872
+    test accuracy after 22 epochs: 0.6728000044822693
+    test accuracy after 23 epochs: 0.6717000007629395
+    test accuracy after 24 epochs: 0.6710999608039856
+    test accuracy after 25 epochs: 0.6697999835014343
+    test accuracy after 26 epochs: 0.6584999561309814
+    test accuracy after 27 epochs: 0.6681999564170837
+    test accuracy after 28 epochs: 0.675599992275238
+    test accuracy after 29 epochs: 0.6699000000953674
+    test accuracy after 30 epochs: 0.670699954032898
+    test accuracy after 31 epochs: 0.6758999824523926
+    test accuracy after 32 epochs: 0.6710000038146973
+    test accuracy after 33 epochs: 0.6714999675750732
+    test accuracy after 34 epochs: 0.6653000116348267
+    test accuracy after 35 epochs: 0.6785999536514282
+    test accuracy after 36 epochs: 0.673799991607666
+    test accuracy after 37 epochs: 0.6759999990463257
+    test accuracy after 38 epochs: 0.6736999750137329
+    test accuracy after 39 epochs: 0.6735000014305115
+    test accuracy after 40 epochs: 0.670699954032898
+    0.670699954032898
     """
